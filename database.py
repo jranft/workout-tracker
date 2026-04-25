@@ -19,11 +19,16 @@ def init_db():
             start_time TEXT,
             end_time TEXT,
             duration TEXT,
+            decimal_duration REAL,
             miles REAL,
             active_calories INTEGER,
             avg_heart_rate INTEGER,
             created_at TEXT DEFAULT (datetime('now'))
         )
     """)
+    try:
+        conn.execute("ALTER TABLE workouts ADD COLUMN decimal_duration REAL")
+    except Exception:
+        pass
     conn.commit()
     conn.close()

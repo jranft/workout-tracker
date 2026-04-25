@@ -66,16 +66,21 @@ def log_workout():
             flash("Invalid numeric input for miles, calories, or heart rate.")
             return redirect(url_for("index"))
 
+        duration = data.get("duration") or None
+        decimal_duration = parse_duration(duration) if duration else None
+
         conn.execute("""
             INSERT INTO workouts
-                (workout_type, workout_date, start_time, end_time, duration, miles, active_calories, avg_heart_rate)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                (workout_type, workout_date, start_time, end_time, duration, decimal_duration,
+                 miles, active_calories, avg_heart_rate)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             workout_type,
             workout_date,
             data.get("start_time") or None,
             data.get("end_time") or None,
-            data.get("duration") or None,
+            duration,
+            decimal_duration,
             miles,
             active_calories,
             avg_heart_rate,
