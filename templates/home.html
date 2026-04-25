@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>Workout Tracker</title>
+  <style>
+    html { color-scheme: light; }
+    body { font-family: sans-serif; max-width: 960px; margin: 40px auto; padding: 0 16px; background: #ffffff; color: #111; }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    h1 { font-size: 1.5rem; margin: 0; }
+    .btn { padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; text-decoration: none; }
+    .btn:hover { background: #1d4ed8; }
+    .flash { background: #d1fae5; color: #065f46; padding: 10px; border-radius: 4px; margin-bottom: 16px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th { text-align: left; padding: 10px 12px; background: #f3f4f6; border-bottom: 2px solid #e5e7eb; cursor: pointer; user-select: none; white-space: nowrap; }
+    th:hover { background: #e5e7eb; }
+    th .sort-arrow { margin-left: 4px; color: #9ca3af; }
+    th.sorted-asc .sort-arrow::after { content: " ▲"; color: #2563eb; }
+    th.sorted-desc .sort-arrow::after { content: " ▼"; color: #2563eb; }
+    th:not(.sorted-asc):not(.sorted-desc) .sort-arrow::after { content: " ⇅"; }
+    td { padding: 10px 12px; border-bottom: 1px solid #e5e7eb; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f9fafb; }
+    .empty { color: #6b7280; padding: 24px 0; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <h1>Workouts</h1>
+    <a class="btn" href="/new">+ New Workout</a>
+  </div>
+
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for msg in messages %}
+        <div class="flash">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  {% if workouts %}
+  <table id="workout-table">
+    <thead>
+      <tr>
+        <th data-col="0">Type<span class="sort-arrow"></span></th>
+        <th data-col="1" class="sorted-desc">Date<span class="sort-arrow"></span></th>
+        <th data-col="2">Start<span class="sort-arrow"></span></th>
+        <th data-col="3">End<span class="sort-arrow"></span></th>
+        <th data-col="4">Duration<span class="sort-arrow"></span></th>
+        <th data-col="5">Miles<span class="sort-arrow"></span></th>
+        <th data-col="6">Calories<span class="sort-arrow"></span></th>
+        <th data-col="7">Avg HR<span class="sort-arrow"></span></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for w in workouts %}
+      <tr>
+        <td>{{ w.workout_type }}</td>
+        <td>{{ w.workout_date }}</td>
+        <td>{{ w.start_time or '' }}</td>
+        <td>{{ w.end_time or '' }}</td>
+        <td>{{ w.duration or '' }}</td>
+        <td>{{ w.miles if w.miles is not none else '' }}</td>
+        <td>{{ w.active_calories if w.active_calories is not none else '' }}</td>
+        <td>{{ w.avg_heart_rate if w.avg_heart_rate is not none else '' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No workouts logged yet. <a href="/new">Add your first one.</a></p>
+  {% endif %}
+
+  <script>
+    (function () {
+      const table = document.getElementById('workout-table');
+      if (!table) return;
+      const headers = table.querySelectorAll('th');
+      let sortCol = 1, sortAsc = false;
+
+      function cellVal(row, col) {
+        return row.cells[col]?.textContent.trim() ?? '';
+      }
+
+      function sortTable(col, asc) {
+        const tbody = table.tBodies[0];
+        const rows = Array.from(tbody.rows);
+        rows.sort((a, b) => {
+          const va = cellVal(a, col), vb = cellVal(b, col);
+          const na = parseFloat(va), nb = parseFloat(vb);
+          const cmp = (!isNaN(na) && !isNaN(nb)) ? na - nb : va.localeCompare(vb);
+          return asc ? cmp : -cmp;
+        });
+        rows.forEach(r => tbody.appendChild(r));
+        headers.forEach(h => h.classList.remove('sorted-asc', 'sorted-desc'));
+        headers[col].classList.add(asc ? 'sorted-asc' : 'sorted-desc');
+      }
+
+      headers.forEach((th, i) => {
+        th.addEventListener('click', () => {
+          if (i === sortCol) { sortAsc = !sortAsc; }
+          else { sortCol = i; sortAsc = true; }
+          sortTable(sortCol, sortAsc);
+        });
+      });
+
+      sortTable(sortCol, sortAsc);
+    })();
+  </script>
+</body>
+</html>
