@@ -1,6 +1,8 @@
+import os
 import sqlite3
 
-DB_PATH = "workouts.db"
+# Fix m1: use absolute path so the DB is always found regardless of cwd
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "workouts.db")
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
