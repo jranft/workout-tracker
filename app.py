@@ -49,6 +49,20 @@ def index():
 def new_workout():
     return render_template("index.html", workout_types=WORKOUT_TYPES)
 
+@app.route("/edit/<int:workout_id>", methods=["GET"])
+def edit_workout(workout_id):
+    conn = get_db()
+    try:
+        workout = conn.execute(
+            "SELECT * FROM workouts WHERE id = ?", (workout_id,)
+        ).fetchone()
+    finally:
+        conn.close()
+    if workout is None:
+        flash("Workout not found.")
+        return redirect(url_for("index"))
+    return render_template("edit.html", workout=workout, workout_types=WORKOUT_TYPES)
+
 @app.route("/log", methods=["POST"])
 def log_workout():
     data = request.form
@@ -103,6 +117,66 @@ def log_workout():
         conn.close()
 
     flash("Workout saved!")
+    return redirect(url_for("index"))
+
+@app.route("/edit/<int:workout_id>", methods=["POST"])
+def update_workout(workout_id):
+    data = request.form
+    workout_type = data.get("workout_type", "").strip()
+    workout_date = data.get("workout_date", "").strip()
+
+    if not workout_type or not workout_date:
+        flash("Workout type and date are required.")
+        return redirect(url_for("edit_workout", workout_id=workout_id))
+
+    try:
+        datetime.strptime(workout_date, "%Y-%m-%d")
+    except ValueError:
+        flash("Invalid date format. Please use YYYY-MM-DD.")
+        return redirect(url_for("edit_workout", workout_id=workout_id))
+
+    conn = get_db()
+    try:
+        try:
+            miles = float(data["miles"]) if data.get("miles") else None
+            active_calories = int(data["active_calories"]) if data.get("active_calories") else None
+            avg_heart_rate = int(data["avg_heart_rate"]) if data.get("avg_heart_rate") else None
+        except (ValueError, KeyError):
+            flash("Invalid numeric input for miles, calories, or heart rate.")
+            return redirect(url_for("edit_workout", workout_id=workout_id))
+
+        duration = data.get("duration") or None
+        decimal_duration = parse_duration(duration) if duration else None
+
+        conn.execute("""
+            UPDATE workouts SET
+                workout_type=?, workout_date=?, start_time=?, end_time=?,
+                duration=?, decimal_duration=?, miles=?, active_calories=?, avg_heart_rate=?
+            WHERE id=?
+        """, (
+            workout_type, workout_date,
+            data.get("start_time") or None,
+            data.get("end_time") or None,
+            duration, decimal_duration,
+            miles, active_calories, avg_heart_rate,
+            workout_id,
+        ))
+        conn.commit()
+    finally:
+        conn.close()
+
+    flash("Workout updated!")
+    return redirect(url_for("index"))
+
+@app.route("/delete/<int:workout_id>", methods=["POST"])
+def delete_workout(workout_id):
+    conn = get_db()
+    try:
+        conn.execute("DELETE FROM workouts WHERE id = ?", (workout_id,))
+        conn.commit()
+    finally:
+        conn.close()
+    flash("Workout deleted.")
     return redirect(url_for("index"))
 
 if __name__ == "__main__":

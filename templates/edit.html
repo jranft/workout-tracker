@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>Edit Workout</title>
+  <style>
+    html { color-scheme: light; }
+    body { font-family: sans-serif; max-width: 520px; margin: 40px auto; padding: 0 16px; background: #ffffff; color: #111; }
+    .back-link { font-size: 0.9rem; color: #2563eb; }
+    h1 { font-size: 1.5rem; margin-bottom: 24px; }
+    label { display: block; margin-top: 14px; font-weight: bold; font-size: 0.9rem; }
+    input, select { width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box; font-size: 1rem; border: 1px solid #ccc; border-radius: 4px; }
+    .actions { display: flex; gap: 12px; margin-top: 24px; }
+    .btn-update { padding: 10px 24px; background: #2563eb; color: white; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; }
+    .btn-update:hover { background: #1d4ed8; }
+    .btn-delete { padding: 10px 24px; background: #dc2626; color: white; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; }
+    .btn-delete:hover { background: #b91c1c; }
+    .flash { background: #d1fae5; color: #065f46; padding: 10px; border-radius: 4px; margin-bottom: 16px; }
+    .field-group { display: none; }
+    .field-group.active { display: block; }
+  </style>
+</head>
+<body>
+  <a href="{{ url_for('index') }}" class="back-link">&larr; Home</a>
+  <h1>Edit Workout</h1>
+
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for msg in messages %}
+        <div class="flash">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <form method="POST" action="{{ url_for('update_workout', workout_id=workout.id) }}">
+    <label>Workout Type
+      <select name="workout_type" id="workout_type" required onchange="showFields()">
+        <option value="">-- Select --</option>
+        {% for wt in workout_types %}
+          <option value="{{ wt }}" {% if wt == workout.workout_type %}selected{% endif %}>{{ wt }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label>Date
+      <input type="date" name="workout_date" value="{{ workout.workout_date }}" required>
+    </label>
+
+    <!-- Indoor Air Bike fields -->
+    <div class="field-group" id="fields-indoor-air-bike">
+      <label>Miles
+        <input type="number" name="miles" step="0.01" min="0" value="{{ workout.miles if workout.miles is not none else '' }}">
+      </label>
+      <label>Workout Duration (hh:mm:ss)
+        <input type="text" name="duration" id="duration" placeholder="00:20:05" pattern="\d{2}:\d{2}:\d{2}" oninput="updateDecimal()" value="{{ workout.duration or '' }}">
+      </label>
+      <span id="decimal-duration" style="display:none; font-size:0.85rem; color:#555; margin-top:4px;">
+        Decimal minutes: <strong id="decimal-value"></strong>
+      </span>
+      <label>Active Calories
+        <input type="number" name="active_calories" min="0" value="{{ workout.active_calories if workout.active_calories is not none else '' }}">
+      </label>
+      <label>Average Heart Rate (bpm)
+        <input type="number" name="avg_heart_rate" min="0" value="{{ workout.avg_heart_rate if workout.avg_heart_rate is not none else '' }}">
+      </label>
+      <label>Start Time
+        <input type="time" name="start_time" value="{{ workout.start_time or '' }}">
+      </label>
+      <label>End Time
+        <input type="time" name="end_time" value="{{ workout.end_time or '' }}">
+      </label>
+    </div>
+
+    <div class="actions">
+      <button type="submit" class="btn-update">Update</button>
+    </div>
+  </form>
+
+  <form method="POST" action="{{ url_for('delete_workout', workout_id=workout.id) }}" style="margin-top:0;">
+    <button type="submit" class="btn-delete" onclick="return confirm('Delete this workout? This cannot be undone.')">Delete</button>
+  </form>
+
+  <script>
+    function toSlug(s) {
+      return s.toLowerCase().replace(/\s+/g, '-');
+    }
+
+    function showFields() {
+      document.querySelectorAll('.field-group').forEach(el => el.classList.remove('active'));
+      const val = document.getElementById('workout_type').value;
+      if (val) {
+        const el = document.getElementById('fields-' + toSlug(val));
+        if (el) el.classList.add('active');
+      }
+    }
+
+    function updateDecimal() {
+      const durationInput = document.getElementById('duration');
+      const span = document.getElementById('decimal-duration');
+      if (!durationInput || !span) return;
+      const raw = durationInput.value.trim();
+      const match = raw.match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      if (match) {
+        const h = parseInt(match[1], 10);
+        const m = parseInt(match[2], 10);
+        const s = parseInt(match[3], 10);
+        const dec = (h * 60 + m + s / 60).toFixed(4);
+        document.getElementById('decimal-value').textContent = dec;
+        span.style.display = 'block';
+      } else {
+        span.style.display = 'none';
+      }
+    }
+
+    // Show fields for the currently selected workout type on page load
+    showFields();
+    // Also trigger decimal preview if duration is pre-filled
+    updateDecimal();
+  </script>
+</body>
+</html>
