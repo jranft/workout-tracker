@@ -20,3 +20,10 @@ def test_invalid_returns_none():
     assert parse_duration("") is None
     assert parse_duration("abc") is None
     assert parse_duration(None) is None
+
+def test_out_of_range_returns_none():
+    assert parse_duration("00:99:00") is None
+    assert parse_duration("00:00:61") is None
+
+def test_malformed_three_part_returns_none():
+    assert parse_duration("00:xx:00") is None
