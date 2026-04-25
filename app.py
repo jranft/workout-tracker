@@ -34,8 +34,8 @@ WORKOUT_TYPES = [
 # Fix I3: run init_db at module level so it runs on import, not just under __main__
 init_db()
 
-@app.route("/", methods=["GET"])
-def index():
+@app.route("/new", methods=["GET"])
+def new_workout():
     return render_template("index.html", workout_types=WORKOUT_TYPES)
 
 @app.route("/log", methods=["POST"])
@@ -48,13 +48,13 @@ def log_workout():
 
     if not workout_type or not workout_date:
         flash("Workout type and date are required.")
-        return redirect(url_for("index"))
+        return redirect(url_for("new_workout"))
 
     try:
         datetime.strptime(workout_date, "%Y-%m-%d")
     except ValueError:
         flash("Invalid date format. Please use YYYY-MM-DD.")
-        return redirect(url_for("index"))
+        return redirect(url_for("new_workout"))
 
     # Fix C1: wrap type conversions and INSERT in try/except for ValueError/KeyError
     # Fix I2: use try/finally to ensure conn.close() is always called
@@ -66,7 +66,7 @@ def log_workout():
             avg_heart_rate = int(data["avg_heart_rate"]) if data.get("avg_heart_rate") else None
         except (ValueError, KeyError):
             flash("Invalid numeric input for miles, calories, or heart rate.")
-            return redirect(url_for("index"))
+            return redirect(url_for("new_workout"))
 
         duration = data.get("duration") or None
         decimal_duration = parse_duration(duration) if duration else None
@@ -95,4 +95,5 @@ def log_workout():
     return redirect(url_for("index"))
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(debug=True, port=port)

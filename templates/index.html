@@ -3,9 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
   <title>Workout Tracker</title>
   <style>
-    body { font-family: sans-serif; max-width: 520px; margin: 40px auto; padding: 0 16px; }
+    html { color-scheme: light; }
+    body { font-family: sans-serif; max-width: 520px; margin: 40px auto; padding: 0 16px; background: #ffffff; color: #111; }
     h1 { font-size: 1.5rem; margin-bottom: 24px; }
     label { display: block; margin-top: 14px; font-weight: bold; font-size: 0.9rem; }
     input, select { width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box; font-size: 1rem; border: 1px solid #ccc; border-radius: 4px; }
@@ -17,6 +19,7 @@
   </style>
 </head>
 <body>
+  <a href="/" style="font-size:0.9rem; color:#2563eb;">&larr; Home</a>
   <h1>Log Workout</h1>
 
   {% with messages = get_flashed_messages() %}
