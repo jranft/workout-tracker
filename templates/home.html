@@ -29,7 +29,7 @@
 <body>
   <div class="top-bar">
     <h1>Workouts</h1>
-    <a class="btn" href="/new">+ New Workout</a>
+    <a class="btn" href="{{ url_for('new_workout') }}">+ New Workout</a>
   </div>
 
   {% with messages = get_flashed_messages() %}
@@ -70,7 +70,7 @@
     </tbody>
   </table>
   {% else %}
-  <p class="empty">No workouts logged yet. <a href="/new">Add your first one.</a></p>
+  <p class="empty">No workouts logged yet. <a href="{{ url_for('new_workout') }}">Add your first one.</a></p>
   {% endif %}
 
   <script>
