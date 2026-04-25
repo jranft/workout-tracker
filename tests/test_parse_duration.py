@@ -27,3 +27,6 @@ def test_out_of_range_returns_none():
 
 def test_malformed_three_part_returns_none():
     assert parse_duration("00:xx:00") is None
+
+def test_negative_hours_returns_none():
+    assert parse_duration("-1:00:00") is None

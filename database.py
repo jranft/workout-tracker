@@ -28,7 +28,8 @@ def init_db():
     """)
     try:
         conn.execute("ALTER TABLE workouts ADD COLUMN decimal_duration REAL")
-    except Exception:
-        pass
+    except sqlite3.OperationalError as e:
+        if "duplicate column" not in str(e):
+            raise
     conn.commit()
     conn.close()

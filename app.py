@@ -14,6 +14,8 @@ def parse_duration(s):
         if len(parts) != 3:
             return None
         h, m, sec = int(parts[0]), int(parts[1]), int(parts[2])
+        if h < 0:
+            return None
         if not (0 <= m <= 59 and 0 <= sec <= 59):
             return None
         return h * 60 + m + sec / 60
