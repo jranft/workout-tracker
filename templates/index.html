@@ -47,7 +47,10 @@
         <input type="number" name="miles" step="0.01" min="0">
       </label>
       <label>Workout Duration (hh:mm:ss)
-        <input type="text" name="duration" placeholder="00:20:05" pattern="\d{2}:\d{2}:\d{2}">
+        <input type="text" name="duration" id="duration" placeholder="00:20:05" pattern="\d{2}:\d{2}:\d{2}" oninput="updateDecimal()">
+        <span id="decimal-duration" style="display:none; font-size:0.85rem; color:#555; margin-top:4px;">
+          Decimal minutes: <strong id="decimal-value"></strong>
+        </span>
       </label>
       <label>Active Calories
         <input type="number" name="active_calories" min="0">
@@ -79,6 +82,22 @@
       if (val) {
         const el = document.getElementById('fields-' + toSlug(val));
         if (el) el.classList.add('active');
+      }
+    }
+
+    function updateDecimal() {
+      const raw = document.getElementById('duration').value.trim();
+      const span = document.getElementById('decimal-duration');
+      const match = raw.match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      if (match) {
+        const h = parseInt(match[1]);
+        const m = parseInt(match[2]);
+        const s = parseInt(match[3]);
+        const dec = (h * 60 + m + s / 60).toFixed(4);
+        document.getElementById('decimal-value').textContent = dec;
+        span.style.display = 'block';
+      } else {
+        span.style.display = 'none';
       }
     }
   </script>
