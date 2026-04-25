@@ -56,7 +56,7 @@
     </thead>
     <tbody>
       {% for w in workouts %}
-      <tr>
+      <tr style="cursor:pointer;" onclick="location.href='/edit/{{ w.id }}'">
         <td>{{ w.workout_type }}</td>
         <td>{{ w.workout_date }}</td>
         <td>{{ w.start_time or '' }}</td>
