@@ -34,6 +34,17 @@ WORKOUT_TYPES = [
 # Fix I3: run init_db at module level so it runs on import, not just under __main__
 init_db()
 
+@app.route("/", methods=["GET"])
+def index():
+    conn = get_db()
+    try:
+        workouts = conn.execute(
+            "SELECT * FROM workouts ORDER BY workout_date DESC, id DESC"
+        ).fetchall()
+    finally:
+        conn.close()
+    return render_template("home.html", workouts=workouts)
+
 @app.route("/new", methods=["GET"])
 def new_workout():
     return render_template("index.html", workout_types=WORKOUT_TYPES)
