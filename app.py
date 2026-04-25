@@ -6,6 +6,18 @@ from database import init_db, get_db
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
 
+def parse_duration(s):
+    if not s:
+        return None
+    try:
+        parts = s.strip().split(":")
+        if len(parts) != 3:
+            return None
+        h, m, sec = int(parts[0]), int(parts[1]), int(parts[2])
+        return h * 60 + m + sec / 60
+    except (ValueError, AttributeError):
+        return None
+
 WORKOUT_TYPES = [
     "Indoor Air Bike",
     "Other 1",
