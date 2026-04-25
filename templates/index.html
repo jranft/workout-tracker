@@ -38,7 +38,7 @@
     </label>
 
     <label>Date
-      <input type="date" name="workout_date" required>
+      <input type="date" name="workout_date" id="workout_date" required>
     </label>
 
     <!-- Indoor Air Bike fields -->
@@ -67,11 +67,18 @@
   </form>
 
   <script>
+    document.getElementById('workout_date').valueAsDate = new Date();
+
+    function toSlug(s) {
+      return s.toLowerCase().replace(/\s+/g, '-');
+    }
+
     function showFields() {
       document.querySelectorAll('.field-group').forEach(el => el.classList.remove('active'));
       const val = document.getElementById('workout_type').value;
-      if (val === 'Indoor Air Bike') {
-        document.getElementById('fields-indoor-air-bike').classList.add('active');
+      if (val) {
+        const el = document.getElementById('fields-' + toSlug(val));
+        if (el) el.classList.add('active');
       }
     }
   </script>
