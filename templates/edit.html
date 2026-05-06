@@ -900,7 +900,42 @@
       if (!isNaN(hr) && hr > 0 && match && !isNaN(mi) && mi > 0) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; span.textContent = Math.round((hr*d)/mi); } else { span.textContent = ''; }
     }
 
+    function loadSavedValues() {
+      const workoutType = '{{ workout.workout_type }}'.toLowerCase().replace(/\s+/g, '-');
+      const saved = {
+        decimal: {{ workout.decimal_duration or 'null' }},
+        mph: {{ workout.mph or 'null' }},
+        mpm: {{ workout.minutes_per_mile or 'null' }},
+        cpm: {{ workout.calories_per_minute or 'null' }},
+        cpmile: {{ workout.calories_per_mile or 'null' }},
+        thb: {{ workout.total_heart_beats or 'null' }},
+        hbpm: {{ workout.heart_beats_per_mile or 'null' }}
+      };
+
+      const spans = {
+        decimal: document.getElementById(`decimal-value-${workoutType}`),
+        mph: document.getElementById(`mph-value-${workoutType}`),
+        mpm: document.getElementById(`mpm-value-${workoutType}`),
+        cpm: document.getElementById(`cpm-value-${workoutType}`),
+        cpmile: document.getElementById(`cpm-mile-value-${workoutType}`),
+        thb: document.getElementById(`thb-value-${workoutType}`),
+        hbpm: document.getElementById(`hbpm-value-${workoutType}`)
+      };
+
+      if (saved.decimal && spans.decimal) spans.decimal.textContent = saved.decimal.toFixed(2);
+      if (saved.mph && spans.mph) spans.mph.textContent = saved.mph.toFixed(2);
+      if (saved.mpm && spans.mpm) {
+        const mins = Math.floor(saved.mpm), secs = Math.round((saved.mpm - mins) * 60);
+        spans.mpm.textContent = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+      }
+      if (saved.cpm && spans.cpm) spans.cpm.textContent = saved.cpm.toFixed(2);
+      if (saved.cpmile && spans.cpmile) spans.cpmile.textContent = saved.cpmile.toFixed(2);
+      if (saved.thb && spans.thb) spans.thb.textContent = saved.thb.toString();
+      if (saved.hbpm && spans.hbpm) spans.hbpm.textContent = saved.hbpm.toString();
+    }
+
     showFields();
+    loadSavedValues();
     updateDecimal(); updateDecimalElliptical(); updateDecimalIndoorCycle(); updateDecimalOutdoorCycle(); updateDecimalOutdoorWalk(); updateDecimalPeleton(); updateDecimalRowing(); updateDecimalStairStepper(); updateDecimalTreadmill();
     calculateCaloriesPerMile(); calculateCaloriesPerMileElliptical(); calculateCaloriesPerMileIndoorCycle(); calculateCaloriesPerMileOutdoorCycle(); calculateCaloriesPerMileOutdoorWalk(); calculateCaloriesPerMilePeleton(); calculateCaloriesPerMileRowing(); calculateCaloriesPerMileStairStepper(); calculateCaloriesPerMileTreadmill();
     calculateTotalHeartBeats(); calculateTotalHeartBeatsElliptical(); calculateTotalHeartBeatsIndoorCycle(); calculateTotalHeartBeatsOutdoorCycle(); calculateTotalHeartBeatsOutdoorWalk(); calculateTotalHeartBeatsPeleton(); calculateTotalHeartBeatsRowing(); calculateTotalHeartBeatsStairStepper(); calculateTotalHeartBeatsTreadmill();
