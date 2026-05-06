@@ -23,6 +23,22 @@ def init_db():
             miles REAL,
             active_calories INTEGER,
             avg_heart_rate INTEGER,
+            max_heart_rate INTEGER,
+            avg_cadence INTEGER,
+            meters INTEGER,
+            elevation_gain INTEGER,
+            flights INTEGER,
+            mph REAL,
+            minutes_per_mile REAL,
+            calories_per_minute REAL,
+            calories_per_mile REAL,
+            total_heart_beats INTEGER,
+            heart_beats_per_mile INTEGER,
+            vo2_max REAL,
+            peleton_output INTEGER,
+            peleton_resistance INTEGER,
+            avg_power INTEGER,
+            source TEXT,
             created_at TEXT DEFAULT (datetime('now'))
         )
     """)
@@ -31,5 +47,29 @@ def init_db():
     except sqlite3.OperationalError as e:
         if "duplicate column" not in str(e):
             raise
+    try:
+        conn.execute("ALTER TABLE workouts ADD COLUMN max_heart_rate INTEGER")
+    except sqlite3.OperationalError as e:
+        if "duplicate column" not in str(e):
+            raise
+    try:
+        conn.execute("ALTER TABLE workouts ADD COLUMN avg_cadence INTEGER")
+    except sqlite3.OperationalError as e:
+        if "duplicate column" not in str(e):
+            raise
+    for col, typ in [
+        ("meters", "INTEGER"), ("elevation_gain", "INTEGER"), ("flights", "INTEGER"), ("mph", "REAL"), ("minutes_per_mile", "REAL"), ("calories_per_minute", "REAL"),
+        ("calories_per_mile", "REAL"), ("total_heart_beats", "INTEGER"), ("heart_beats_per_mile", "INTEGER"),
+        ("vo2_max", "REAL"),
+        ("peleton_output", "INTEGER"),
+        ("peleton_resistance", "INTEGER"),
+        ("avg_power", "INTEGER"),
+        ("source", "TEXT"),
+    ]:
+        try:
+            conn.execute(f"ALTER TABLE workouts ADD COLUMN {col} {typ}")
+        except sqlite3.OperationalError as e:
+            if "duplicate column" not in str(e):
+                raise
     conn.commit()
     conn.close()

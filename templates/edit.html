@@ -6,24 +6,15 @@
   <meta name="color-scheme" content="light">
   <title>Edit Workout</title>
   <style>
-    html { color-scheme: light; }
-    body { font-family: sans-serif; max-width: 520px; margin: 40px auto; padding: 0 16px; background: #ffffff; color: #111; }
-    .back-link { font-size: 0.9rem; color: #2563eb; }
-    h1 { font-size: 1.5rem; margin-bottom: 24px; }
-    label { display: block; margin-top: 14px; font-weight: bold; font-size: 0.9rem; }
-    input, select { width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box; font-size: 1rem; border: 1px solid #ccc; border-radius: 4px; }
-    .actions { display: flex; gap: 12px; margin-top: 24px; }
-    .btn-update { padding: 10px 24px; background: #2563eb; color: white; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; }
-    .btn-update:hover { background: #1d4ed8; }
-    .btn-delete { padding: 10px 24px; background: #dc2626; color: white; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; }
-    .btn-delete:hover { background: #b91c1c; }
-    .flash { background: #d1fae5; color: #065f46; padding: 10px; border-radius: 4px; margin-bottom: 16px; }
+    body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
     .field-group { display: none; }
-    .field-group.active { display: block; }
+    .field-group.active { display: table-row-group; }
+    td:first-child { text-align: right; font-weight: bold; padding-right: 12px; white-space: nowrap; }
+    td { padding: 2px 0; vertical-align: middle; }
   </style>
 </head>
 <body>
-  <a href="{{ url_for('index') }}" class="back-link">&larr; Home</a>
+  <a href="{{ url_for('index') }}">&larr; Home</a>
   <h1>Edit Workout</h1>
 
   {% with messages = get_flashed_messages() %}
@@ -34,90 +25,887 @@
     {% endif %}
   {% endwith %}
 
-  <form method="POST" action="{{ url_for('update_workout', workout_id=workout.id) }}">
-    <label>Workout Type
-      <select name="workout_type" id="workout_type" required onchange="showFields()">
-        <option value="">-- Select --</option>
-        {% for wt in workout_types %}
-          <option value="{{ wt }}" {% if wt == workout.workout_type %}selected{% endif %}>{{ wt }}</option>
-        {% endfor %}
-      </select>
-    </label>
+  <form id="update-form" method="POST" action="{{ url_for('update_workout', workout_id=workout.id) }}">
+    <table>
+      <tbody>
+        <tr><td><label for="workout_type">Workout Type</label></td><td><select name="workout_type" id="workout_type" required onchange="showFields()"><option value="">-- Select --</option>{% for wt in workout_types %}<option value="{{ wt }}" {% if wt == workout.workout_type %}selected{% endif %}>{{ wt }}</option>{% endfor %}</select></td></tr>
+        <tr><td><label for="workout_date">Date</label></td><td><input type="date" name="workout_date" id="workout_date" value="{{ workout.workout_date }}" required></td></tr>
+        <tr><td><label for="start_time">Start Time</label></td><td><input type="time" name="start_time" id="start_time" value="{{ workout.start_time or '' }}"></td></tr>
+        <tr><td><label for="end_time">End Time</label></td><td><input type="time" name="end_time" id="end_time" value="{{ workout.end_time or '' }}"></td></tr>
+      </tbody>
 
-    <label>Date
-      <input type="date" name="workout_date" value="{{ workout.workout_date }}" required>
-    </label>
+      <!-- Air Bike fields -->
+      <tbody class="field-group" id="fields-air-bike">
+        <tr><td>Duration (hh:mm:ss)</td><td><input type="text" name="duration" id="duration" placeholder="00:20:05" pattern="\d{2}:\d{2}:\d{2}" oninput="updateDecimal()" value="{{ workout.duration or '' }}"></td></tr>
+        <tr><td>Miles</td><td><input type="number" name="miles" id="miles" step="0.01" min="0" value="{{ workout.miles if workout.miles is not none else '' }}" oninput="calculateMPH(); calculateCaloriesPerMile(); calculateMinutesPerMile(); calculateHeartBeatsPerMile();"></td></tr>
+        <tr><td>Active Calories</td><td><input type="number" name="active_calories" id="active_calories" min="0" value="{{ workout.active_calories if workout.active_calories is not none else '' }}" oninput="calculateCaloriesPerMinute(); calculateCaloriesPerMile();"></td></tr>
+        <tr><td>Avg HR</td><td><input type="number" name="avg_heart_rate" id="avg_heart_rate" min="0" value="{{ workout.avg_heart_rate if workout.avg_heart_rate is not none else '' }}" oninput="calculateTotalHeartBeats(); calculateHeartBeatsPerMile();"></td></tr>
+        <tr><td>Max HR</td><td><input type="number" name="max_heart_rate" id="max_heart_rate" min="0" value="{{ workout.max_heart_rate if workout.max_heart_rate is not none else '' }}"></td></tr>
+        <tr><td>Avg Cadence</td><td><input type="number" name="avg_cadence" id="avg_cadence" min="0" value="{{ workout.avg_cadence if workout.avg_cadence is not none else '' }}"></td></tr>
+        <tr><td>Decimal Duration</td><td><span id="decimal-value"></span></td></tr>
+        <tr><td>Miles Per Hour</td><td><span id="mph-value"></span></td></tr>
+        <tr><td>Minutes Per Mile</td><td><span id="mpm-value"></span></td></tr>
+        <tr><td>Calories Per Minute</td><td><span id="cpm-value"></span></td></tr>
+        <tr><td>Calories Per Mile</td><td><span id="cpm-mile-value"></span></td></tr>
+        <tr><td>Total Heart Beats</td><td><span id="thb-value"></span></td></tr>
+        <tr><td>Heart Beats Per Mile</td><td><span id="hbpm-value"></span></td></tr>
+      </tbody>
 
-    <!-- Indoor Air Bike fields -->
-    <div class="field-group" id="fields-indoor-air-bike">
-      <label>Miles
-        <input type="number" name="miles" step="0.01" min="0" value="{{ workout.miles if workout.miles is not none else '' }}">
-      </label>
-      <label>Workout Duration (hh:mm:ss)
-        <input type="text" name="duration" id="duration" placeholder="00:20:05" pattern="\d{2}:\d{2}:\d{2}" oninput="updateDecimal()" value="{{ workout.duration or '' }}">
-      </label>
-      <span id="decimal-duration" style="display:none; font-size:0.85rem; color:#555; margin-top:4px;">
-        Decimal minutes: <strong id="decimal-value"></strong>
-      </span>
-      <label>Active Calories
-        <input type="number" name="active_calories" min="0" value="{{ workout.active_calories if workout.active_calories is not none else '' }}">
-      </label>
-      <label>Average Heart Rate (bpm)
-        <input type="number" name="avg_heart_rate" min="0" value="{{ workout.avg_heart_rate if workout.avg_heart_rate is not none else '' }}">
-      </label>
-      <label>Start Time
-        <input type="time" name="start_time" value="{{ workout.start_time or '' }}">
-      </label>
-      <label>End Time
-        <input type="time" name="end_time" value="{{ workout.end_time or '' }}">
-      </label>
-    </div>
+      <!-- Elliptical fields -->
+      <tbody class="field-group" id="fields-elliptical">
+        <tr><td>Duration (hh:mm:ss)</td><td><input type="text" name="duration" id="duration-elliptical" placeholder="00:20:05" pattern="\d{2}:\d{2}:\d{2}" oninput="updateDecimalElliptical()" value="{{ workout.duration or '' }}"></td></tr>
+        <tr><td>Miles</td><td><input type="number" name="miles" id="miles-elliptical" step="0.01" min="0" value="{{ workout.miles if workout.miles is not none else '' }}" oninput="calculateMPHElliptical(); calculateCaloriesPerMileElliptical(); calculateMinutesPerMileElliptical(); calculateHeartBeatsPerMileElliptical();"></td></tr>
+        <tr><td>Active Calories</td><td><input type="number" name="active_calories" id="active_calories-elliptical" min="0" value="{{ workout.active_calories if workout.active_calories is not none else '' }}" oninput="calculateCaloriesPerMinuteElliptical(); calculateCaloriesPerMileElliptical();"></td></tr>
+        <tr><td>Avg HR</td><td><input type="number" name="avg_heart_rate" id="avg_heart_rate-elliptical" min="0" value="{{ workout.avg_heart_rate if workout.avg_heart_rate is not none else '' }}" oninput="calculateTotalHeartBeatsElliptical(); calculateHeartBeatsPerMileElliptical();"></td></tr>
+        <tr><td>Max HR</td><td><input type="number" name="max_heart_rate" id="max_heart_rate-elliptical" min="0" value="{{ workout.max_heart_rate if workout.max_heart_rate is not none else '' }}"></td></tr>
+        <tr><td>Avg Power (watts)</td><td><input type="number" name="avg_power" id="avg_power-elliptical" min="0" value="{{ workout.avg_power if workout.avg_power is not none else '' }}"></td></tr>
+        <tr><td>Decimal Duration</td><td><span id="decimal-value-elliptical"></span></td></tr>
+        <tr><td>Miles Per Hour</td><td><span id="mph-value-elliptical"></span></td></tr>
+        <tr><td>Minutes Per Mile</td><td><span id="mpm-value-elliptical"></span></td></tr>
+        <tr><td>Calories Per Minute</td><td><span id="cpm-value-elliptical"></span></td></tr>
+        <tr><td>Calories Per Mile</td><td><span id="cpm-mile-value-elliptical"></span></td></tr>
+        <tr><td>Total Heart Beats</td><td><span id="thb-value-elliptical"></span></td></tr>
+        <tr><td>Heart Beats Per Mile</td><td><span id="hbpm-value-elliptical"></span></td></tr>
+      </tbody>
 
-    <div class="actions">
-      <button type="submit" class="btn-update">Update</button>
-    </div>
-  </form>
+      <!-- Rowing fields -->
+      <tbody class="field-group" id="fields-rowing">
+        <tr><td>Duration (hh:mm:ss)</td><td><input type="text" name="duration" id="duration-rowing" placeholder="00:20:05" pattern="\d{2}:\d{2}:\d{2}" oninput="updateDecimalRowing()" value="{{ workout.duration or '' }}"></td></tr>
+        <tr><td>Meters</td><td><input type="number" name="meters" id="meters-rowing" min="0" value="{{ workout.meters if workout.meters is not none else '' }}" oninput="updateMilesFromMeters()"></td></tr>
+        <tr><td>Miles</td><td><input type="number" name="miles" id="miles-rowing" step="0.0001" min="0" value="{{ workout.miles if workout.miles is not none else '' }}" oninput="calculateMPHRowing(); calculateCaloriesPerMileRowing(); calculateMinutesPerMileRowing(); calculateHeartBeatsPerMileRowing();"></td></tr>
+        <tr><td>Active Calories</td><td><input type="number" name="active_calories" id="active_calories-rowing" min="0" value="{{ workout.active_calories if workout.active_calories is not none else '' }}" oninput="calculateCaloriesPerMinuteRowing(); calculateCaloriesPerMileRowing();"></td></tr>
+        <tr><td>Avg HR</td><td><input type="number" name="avg_heart_rate" id="avg_heart_rate-rowing" min="0" value="{{ workout.avg_heart_rate if workout.avg_heart_rate is not none else '' }}" oninput="calculateTotalHeartBeatsRowing(); calculateHeartBeatsPerMileRowing();"></td></tr>
+        <tr><td>Max HR</td><td><input type="number" name="max_heart_rate" id="max_heart_rate-rowing" min="0" value="{{ workout.max_heart_rate if workout.max_heart_rate is not none else '' }}"></td></tr>
+        <tr><td>Decimal Duration</td><td><span id="decimal-value-rowing"></span></td></tr>
+        <tr><td>Miles Per Hour</td><td><span id="mph-value-rowing"></span></td></tr>
+        <tr><td>Minutes Per Mile</td><td><span id="mpm-value-rowing"></span></td></tr>
+        <tr><td>Calories Per Minute</td><td><span id="cpm-value-rowing"></span></td></tr>
+        <tr><td>Calories Per Mile</td><td><span id="cpm-mile-value-rowing"></span></td></tr>
+        <tr><td>Total Heart Beats</td><td><span id="thb-value-rowing"></span></td></tr>
+        <tr><td>Heart Beats Per Mile</td><td><span id="hbpm-value-rowing"></span></td></tr>
+      </tbody>
 
-  <form method="POST" action="{{ url_for('delete_workout', workout_id=workout.id) }}" style="margin-top:0;">
-    <button type="submit" class="btn-delete" onclick="return confirm('Delete this workout? This cannot be undone.')">Delete</button>
+      <!-- Stair Stepper fields -->
+      <tbody class="field-group" id="fields-stair-stepper">
+        <tr><td>Duration (hh:mm:ss)</td><td><input type="text" name="duration" id="duration-stair-stepper" placeholder="00:20:05" pattern="\d{2}:\d{2}:\d{2}" oninput="updateDecimalStairStepper()" value="{{ workout.duration or '' }}"></td></tr>
+        <tr><td>Miles</td><td><input type="number" name="miles" id="miles-stair-stepper" step="0.01" min="0" value="{{ workout.miles if workout.miles is not none else '' }}" oninput="calculateMPHStairStepper(); calculateCaloriesPerMileStairStepper(); calculateMinutesPerMileStairStepper(); calculateHeartBeatsPerMileStairStepper();"></td></tr>
+        <tr><td>Active Calories</td><td><input type="number" name="active_calories" id="active_calories-stair-stepper" min="0" value="{{ workout.active_calories if workout.active_calories is not none else '' }}" oninput="calculateCaloriesPerMinuteStairStepper(); calculateCaloriesPerMileStairStepper();"></td></tr>
+        <tr><td>Avg HR</td><td><input type="number" name="avg_heart_rate" id="avg_heart_rate-stair-stepper" min="0" value="{{ workout.avg_heart_rate if workout.avg_heart_rate is not none else '' }}" oninput="calculateTotalHeartBeatsStairStepper(); calculateHeartBeatsPerMileStairStepper();"></td></tr>
+        <tr><td>Max HR</td><td><input type="number" name="max_heart_rate" id="max_heart_rate-stair-stepper" min="0" value="{{ workout.max_heart_rate if workout.max_heart_rate is not none else '' }}"></td></tr>
+        <tr><td>Avg Cadence</td><td><input type="number" name="avg_cadence" id="avg_cadence-stair-stepper" min="0" value="{{ workout.avg_cadence if workout.avg_cadence is not none else '' }}"></td></tr>
+        <tr><td>Elevation Gain</td><td><input type="number" name="elevation_gain" id="elevation_gain-stair-stepper" min="0" value="{{ workout.elevation_gain if workout.elevation_gain is not none else '' }}"></td></tr>
+        <tr><td>Flights</td><td><input type="number" name="flights" id="flights-stair-stepper" min="0" value="{{ workout.flights if workout.flights is not none else '' }}"></td></tr>
+        <tr><td>Decimal Duration</td><td><span id="decimal-value-stair-stepper"></span></td></tr>
+        <tr><td>Miles Per Hour</td><td><span id="mph-value-stair-stepper"></span></td></tr>
+        <tr><td>Minutes Per Mile</td><td><span id="mpm-value-stair-stepper"></span></td></tr>
+        <tr><td>Calories Per Minute</td><td><span id="cpm-value-stair-stepper"></span></td></tr>
+        <tr><td>Calories Per Mile</td><td><span id="cpm-mile-value-stair-stepper"></span></td></tr>
+        <tr><td>Total Heart Beats</td><td><span id="thb-value-stair-stepper"></span></td></tr>
+        <tr><td>Heart Beats Per Mile</td><td><span id="hbpm-value-stair-stepper"></span></td></tr>
+      </tbody>
+
+      <!-- Outdoor Walk fields -->
+      <tbody class="field-group" id="fields-outdoor-walk">
+        <tr><td>Duration (hh:mm:ss)</td><td><input type="text" name="duration" id="duration-outdoor-walk" placeholder="00:20:05" pattern="\d{2}:\d{2}:\d{2}" oninput="updateDecimalOutdoorWalk()" value="{{ workout.duration or '' }}"></td></tr>
+        <tr><td>Miles</td><td><input type="number" name="miles" id="miles-outdoor-walk" step="0.01" min="0" value="{{ workout.miles if workout.miles is not none else '' }}" oninput="calculateMPHOutdoorWalk(); calculateCaloriesPerMileOutdoorWalk(); calculateMinutesPerMileOutdoorWalk(); calculateHeartBeatsPerMileOutdoorWalk();"></td></tr>
+        <tr><td>Active Calories</td><td><input type="number" name="active_calories" id="active_calories-outdoor-walk" min="0" value="{{ workout.active_calories if workout.active_calories is not none else '' }}" oninput="calculateCaloriesPerMinuteOutdoorWalk(); calculateCaloriesPerMileOutdoorWalk();"></td></tr>
+        <tr><td>Avg HR</td><td><input type="number" name="avg_heart_rate" id="avg_heart_rate-outdoor-walk" min="0" value="{{ workout.avg_heart_rate if workout.avg_heart_rate is not none else '' }}" oninput="calculateTotalHeartBeatsOutdoorWalk(); calculateHeartBeatsPerMileOutdoorWalk();"></td></tr>
+        <tr><td>Max HR</td><td><input type="number" name="max_heart_rate" id="max_heart_rate-outdoor-walk" min="0" value="{{ workout.max_heart_rate if workout.max_heart_rate is not none else '' }}"></td></tr>
+        <tr><td>Elevation Gain</td><td><input type="number" name="elevation_gain" id="elevation_gain-outdoor-walk" min="0" value="{{ workout.elevation_gain if workout.elevation_gain is not none else '' }}"></td></tr>
+        <tr><td>VO2 Max</td><td><input type="number" name="vo2_max" id="vo2_max-outdoor-walk" step="0.1" min="0" value="{{ workout.vo2_max | one_dec if workout.vo2_max is not none else '' }}"></td></tr>
+        <tr><td>Decimal Duration</td><td><span id="decimal-value-outdoor-walk"></span></td></tr>
+        <tr><td>Miles Per Hour</td><td><span id="mph-value-outdoor-walk"></span></td></tr>
+        <tr><td>Minutes Per Mile</td><td><span id="mpm-value-outdoor-walk"></span></td></tr>
+        <tr><td>Calories Per Minute</td><td><span id="cpm-value-outdoor-walk"></span></td></tr>
+        <tr><td>Calories Per Mile</td><td><span id="cpm-mile-value-outdoor-walk"></span></td></tr>
+        <tr><td>Total Heart Beats</td><td><span id="thb-value-outdoor-walk"></span></td></tr>
+        <tr><td>Heart Beats Per Mile</td><td><span id="hbpm-value-outdoor-walk"></span></td></tr>
+      </tbody>
+
+      <!-- Outdoor Run fields -->
+      <tbody class="field-group" id="fields-outdoor-run">
+        <tr><td>Duration (hh:mm:ss)</td><td><input type="text" name="duration" id="duration-outdoor-run" placeholder="00:20:05" pattern="\d{2}:\d{2}:\d{2}" oninput="updateDecimalOutdoorRun()" value="{{ workout.duration or '' }}"></td></tr>
+        <tr><td>Miles</td><td><input type="number" name="miles" id="miles-outdoor-run" step="0.01" min="0" value="{{ workout.miles if workout.miles is not none else '' }}" oninput="calculateMPHOutdoorRun(); calculateCaloriesPerMileOutdoorRun(); calculateMinutesPerMileOutdoorRun(); calculateHeartBeatsPerMileOutdoorRun();"></td></tr>
+        <tr><td>Active Calories</td><td><input type="number" name="active_calories" id="active_calories-outdoor-run" min="0" value="{{ workout.active_calories if workout.active_calories is not none else '' }}" oninput="calculateCaloriesPerMinuteOutdoorRun(); calculateCaloriesPerMileOutdoorRun();"></td></tr>
+        <tr><td>Avg HR</td><td><input type="number" name="avg_heart_rate" id="avg_heart_rate-outdoor-run" min="0" value="{{ workout.avg_heart_rate if workout.avg_heart_rate is not none else '' }}" oninput="calculateTotalHeartBeatsOutdoorRun(); calculateHeartBeatsPerMileOutdoorRun();"></td></tr>
+        <tr><td>Max HR</td><td><input type="number" name="max_heart_rate" id="max_heart_rate-outdoor-run" min="0" value="{{ workout.max_heart_rate if workout.max_heart_rate is not none else '' }}"></td></tr>
+        <tr><td>Avg Cadence</td><td><input type="number" name="avg_cadence" id="avg_cadence-outdoor-run" min="0" value="{{ workout.avg_cadence if workout.avg_cadence is not none else '' }}"></td></tr>
+        <tr><td>Avg Power (watts)</td><td><input type="number" name="avg_power" id="avg_power-outdoor-run" min="0" value="{{ workout.avg_power if workout.avg_power is not none else '' }}"></td></tr>
+        <tr><td>Elevation Gain</td><td><input type="number" name="elevation_gain" id="elevation_gain-outdoor-run" min="0" value="{{ workout.elevation_gain if workout.elevation_gain is not none else '' }}"></td></tr>
+        <tr><td>VO2 Max</td><td><input type="number" name="vo2_max" id="vo2_max-outdoor-run" step="0.1" min="0" value="{{ workout.vo2_max | one_dec if workout.vo2_max is not none else '' }}"></td></tr>
+        <tr><td>Decimal Duration</td><td><span id="decimal-value-outdoor-run"></span></td></tr>
+        <tr><td>Miles Per Hour</td><td><span id="mph-value-outdoor-run"></span></td></tr>
+        <tr><td>Minutes Per Mile</td><td><span id="mpm-value-outdoor-run"></span></td></tr>
+        <tr><td>Calories Per Minute</td><td><span id="cpm-value-outdoor-run"></span></td></tr>
+        <tr><td>Calories Per Mile</td><td><span id="cpm-mile-value-outdoor-run"></span></td></tr>
+        <tr><td>Total Heart Beats</td><td><span id="thb-value-outdoor-run"></span></td></tr>
+        <tr><td>Heart Beats Per Mile</td><td><span id="hbpm-value-outdoor-run"></span></td></tr>
+      </tbody>
+
+      <!-- Treadmill fields -->
+      <tbody class="field-group" id="fields-treadmill">
+        <tr><td>Duration (hh:mm:ss)</td><td><input type="text" name="duration" id="duration-treadmill" placeholder="00:20:05" pattern="\d{2}:\d{2}:\d{2}" oninput="updateDecimalTreadmill()" value="{{ workout.duration or '' }}"></td></tr>
+        <tr><td>Miles</td><td><input type="number" name="miles" id="miles-treadmill" step="0.01" min="0" value="{{ workout.miles if workout.miles is not none else '' }}" oninput="calculateMPHTreadmill(); calculateCaloriesPerMileTreadmill(); calculateMinutesPerMileTreadmill(); calculateHeartBeatsPerMileTreadmill();"></td></tr>
+        <tr><td>Active Calories</td><td><input type="number" name="active_calories" id="active_calories-treadmill" min="0" value="{{ workout.active_calories if workout.active_calories is not none else '' }}" oninput="calculateCaloriesPerMinuteTreadmill(); calculateCaloriesPerMileTreadmill();"></td></tr>
+        <tr><td>Avg HR</td><td><input type="number" name="avg_heart_rate" id="avg_heart_rate-treadmill" min="0" value="{{ workout.avg_heart_rate if workout.avg_heart_rate is not none else '' }}" oninput="calculateTotalHeartBeatsTreadmill(); calculateHeartBeatsPerMileTreadmill();"></td></tr>
+        <tr><td>Max HR</td><td><input type="number" name="max_heart_rate" id="max_heart_rate-treadmill" min="0" value="{{ workout.max_heart_rate if workout.max_heart_rate is not none else '' }}"></td></tr>
+        <tr><td>Avg Cadence</td><td><input type="number" name="avg_cadence" id="avg_cadence-treadmill" min="0" value="{{ workout.avg_cadence if workout.avg_cadence is not none else '' }}"></td></tr>
+        <tr><td>Elevation</td><td><input type="number" name="elevation_gain" id="elevation_gain-treadmill" min="0" value="{{ workout.elevation_gain if workout.elevation_gain is not none else '' }}"></td></tr>
+        <tr><td>Decimal Duration</td><td><span id="decimal-value-treadmill"></span></td></tr>
+        <tr><td>Miles Per Hour</td><td><span id="mph-value-treadmill"></span></td></tr>
+        <tr><td>Minutes Per Mile</td><td><span id="mpm-value-treadmill"></span></td></tr>
+        <tr><td>Calories Per Minute</td><td><span id="cpm-value-treadmill"></span></td></tr>
+        <tr><td>Calories Per Mile</td><td><span id="cpm-mile-value-treadmill"></span></td></tr>
+        <tr><td>Total Heart Beats</td><td><span id="thb-value-treadmill"></span></td></tr>
+        <tr><td>Heart Beats Per Mile</td><td><span id="hbpm-value-treadmill"></span></td></tr>
+      </tbody>
+
+      <!-- Indoor Cycle fields -->
+      <tbody class="field-group" id="fields-indoor-cycle">
+        <tr><td>Duration (hh:mm:ss)</td><td><input type="text" name="duration" id="duration-indoor-cycle" placeholder="00:20:05" pattern="\d{2}:\d{2}:\d{2}" oninput="updateDecimalIndoorCycle()" value="{{ workout.duration or '' }}"></td></tr>
+        <tr><td>Miles</td><td><input type="number" name="miles" id="miles-indoor-cycle" step="0.01" min="0" value="{{ workout.miles if workout.miles is not none else '' }}" oninput="calculateMPHIndoorCycle(); calculateCaloriesPerMileIndoorCycle(); calculateMinutesPerMileIndoorCycle(); calculateHeartBeatsPerMileIndoorCycle();"></td></tr>
+        <tr><td>Active Calories</td><td><input type="number" name="active_calories" id="active_calories-indoor-cycle" min="0" value="{{ workout.active_calories if workout.active_calories is not none else '' }}" oninput="calculateCaloriesPerMinuteIndoorCycle(); calculateCaloriesPerMileIndoorCycle();"></td></tr>
+        <tr><td>Avg HR</td><td><input type="number" name="avg_heart_rate" id="avg_heart_rate-indoor-cycle" min="0" value="{{ workout.avg_heart_rate if workout.avg_heart_rate is not none else '' }}" oninput="calculateTotalHeartBeatsIndoorCycle(); calculateHeartBeatsPerMileIndoorCycle();"></td></tr>
+        <tr><td>Max HR</td><td><input type="number" name="max_heart_rate" id="max_heart_rate-indoor-cycle" min="0" value="{{ workout.max_heart_rate if workout.max_heart_rate is not none else '' }}"></td></tr>
+        <tr><td>Avg Cadence</td><td><input type="number" name="avg_cadence" id="avg_cadence-indoor-cycle" min="0" value="{{ workout.avg_cadence if workout.avg_cadence is not none else '' }}"></td></tr>
+        <tr><td>Decimal Duration</td><td><span id="decimal-value-indoor-cycle"></span></td></tr>
+        <tr><td>Miles Per Hour</td><td><span id="mph-value-indoor-cycle"></span></td></tr>
+        <tr><td>Minutes Per Mile</td><td><span id="mpm-value-indoor-cycle"></span></td></tr>
+        <tr><td>Calories Per Minute</td><td><span id="cpm-value-indoor-cycle"></span></td></tr>
+        <tr><td>Calories Per Mile</td><td><span id="cpm-mile-value-indoor-cycle"></span></td></tr>
+        <tr><td>Total Heart Beats</td><td><span id="thb-value-indoor-cycle"></span></td></tr>
+        <tr><td>Heart Beats Per Mile</td><td><span id="hbpm-value-indoor-cycle"></span></td></tr>
+      </tbody>
+
+      <!-- Outdoor Cycle fields -->
+      <tbody class="field-group" id="fields-outdoor-cycle">
+        <tr><td>Duration (hh:mm:ss)</td><td><input type="text" name="duration" id="duration-outdoor-cycle" placeholder="00:20:05" pattern="\d{2}:\d{2}:\d{2}" oninput="updateDecimalOutdoorCycle()" value="{{ workout.duration or '' }}"></td></tr>
+        <tr><td>Miles</td><td><input type="number" name="miles" id="miles-outdoor-cycle" step="0.01" min="0" value="{{ workout.miles if workout.miles is not none else '' }}" oninput="calculateMPHOutdoorCycle(); calculateCaloriesPerMileOutdoorCycle(); calculateMinutesPerMileOutdoorCycle(); calculateHeartBeatsPerMileOutdoorCycle();"></td></tr>
+        <tr><td>Active Calories</td><td><input type="number" name="active_calories" id="active_calories-outdoor-cycle" min="0" value="{{ workout.active_calories if workout.active_calories is not none else '' }}" oninput="calculateCaloriesPerMinuteOutdoorCycle(); calculateCaloriesPerMileOutdoorCycle();"></td></tr>
+        <tr><td>Avg HR</td><td><input type="number" name="avg_heart_rate" id="avg_heart_rate-outdoor-cycle" min="0" value="{{ workout.avg_heart_rate if workout.avg_heart_rate is not none else '' }}" oninput="calculateTotalHeartBeatsOutdoorCycle(); calculateHeartBeatsPerMileOutdoorCycle();"></td></tr>
+        <tr><td>Max HR</td><td><input type="number" name="max_heart_rate" id="max_heart_rate-outdoor-cycle" min="0" value="{{ workout.max_heart_rate if workout.max_heart_rate is not none else '' }}"></td></tr>
+        <tr><td>Decimal Duration</td><td><span id="decimal-value-outdoor-cycle"></span></td></tr>
+        <tr><td>Miles Per Hour</td><td><span id="mph-value-outdoor-cycle"></span></td></tr>
+        <tr><td>Minutes Per Mile</td><td><span id="mpm-value-outdoor-cycle"></span></td></tr>
+        <tr><td>Calories Per Minute</td><td><span id="cpm-value-outdoor-cycle"></span></td></tr>
+        <tr><td>Calories Per Mile</td><td><span id="cpm-mile-value-outdoor-cycle"></span></td></tr>
+        <tr><td>Total Heart Beats</td><td><span id="thb-value-outdoor-cycle"></span></td></tr>
+        <tr><td>Heart Beats Per Mile</td><td><span id="hbpm-value-outdoor-cycle"></span></td></tr>
+      </tbody>
+
+      <!-- Peleton fields -->
+      <tbody class="field-group" id="fields-peleton">
+        <tr><td>Duration (hh:mm:ss)</td><td><input type="text" name="duration" id="duration-peleton" placeholder="00:20:05" pattern="\d{2}:\d{2}:\d{2}" oninput="updateDecimalPeleton()" value="{{ workout.duration or '' }}"></td></tr>
+        <tr><td>Miles</td><td><input type="number" name="miles" id="miles-peleton" step="0.01" min="0" value="{{ workout.miles if workout.miles is not none else '' }}" oninput="calculateMPHPeleton(); calculateCaloriesPerMilePeleton(); calculateMinutesPerMilePeleton(); calculateHeartBeatsPerMilePeleton();"></td></tr>
+        <tr><td>Active Calories</td><td><input type="number" name="active_calories" id="active_calories-peleton" min="0" value="{{ workout.active_calories if workout.active_calories is not none else '' }}" oninput="calculateCaloriesPerMinutePeleton(); calculateCaloriesPerMilePeleton();"></td></tr>
+        <tr><td>Avg HR</td><td><input type="number" name="avg_heart_rate" id="avg_heart_rate-peleton" min="0" value="{{ workout.avg_heart_rate if workout.avg_heart_rate is not none else '' }}" oninput="calculateTotalHeartBeatsPeleton(); calculateHeartBeatsPerMilePeleton();"></td></tr>
+        <tr><td>Max HR</td><td><input type="number" name="max_heart_rate" id="max_heart_rate-peleton" min="0" value="{{ workout.max_heart_rate if workout.max_heart_rate is not none else '' }}"></td></tr>
+        <tr><td>Avg Cadence</td><td><input type="number" name="avg_cadence" id="avg_cadence-peleton" min="0" value="{{ workout.avg_cadence if workout.avg_cadence is not none else '' }}"></td></tr>
+        <tr><td>Avg Output (watts)</td><td><input type="number" name="peleton_output" id="peleton_output-peleton" min="0" value="{{ workout.peleton_output if workout.peleton_output is not none else '' }}"></td></tr>
+        <tr><td>Resistance</td><td><input type="number" name="peleton_resistance" id="peleton_resistance-peleton" min="0" value="{{ workout.peleton_resistance if workout.peleton_resistance is not none else '' }}"></td></tr>
+        <tr><td>Decimal Duration</td><td><span id="decimal-value-peleton"></span></td></tr>
+        <tr><td>Miles Per Hour</td><td><span id="mph-value-peleton"></span></td></tr>
+        <tr><td>Minutes Per Mile</td><td><span id="mpm-value-peleton"></span></td></tr>
+        <tr><td>Calories Per Minute</td><td><span id="cpm-value-peleton"></span></td></tr>
+        <tr><td>Calories Per Mile</td><td><span id="cpm-mile-value-peleton"></span></td></tr>
+        <tr><td>Total Heart Beats</td><td><span id="thb-value-peleton"></span></td></tr>
+        <tr><td>Heart Beats Per Mile</td><td><span id="hbpm-value-peleton"></span></td></tr>
+      </tbody>
+
+      <tbody>
+        <tr>
+          <td></td>
+          <td>
+            <form method="POST" action="{{ url_for('delete_workout', workout_id=workout.id) }}" style="display:inline;">
+              <button type="submit" onclick="return confirm('Delete this workout? This cannot be undone.')">Delete</button>
+            </form>
+            <button type="submit" form="update-form">Update</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </form>
 
   <script>
+    document.addEventListener('input', function(e) {
+      if (!e.target.matches('input[name="duration"]')) return;
+      const input = e.target;
+      const digits = input.value.replace(/\D/g, '').slice(0, 6);
+      let fmt = digits;
+      if (digits.length > 4) fmt = digits.slice(0,2)+':'+digits.slice(2,4)+':'+digits.slice(4);
+      else if (digits.length > 2) fmt = digits.slice(0,2)+':'+digits.slice(2);
+      input.value = fmt;
+    }, true);
+
     function toSlug(s) {
       return s.toLowerCase().replace(/\s+/g, '-');
     }
 
     function showFields() {
-      document.querySelectorAll('.field-group').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.field-group').forEach(el => {
+        el.classList.remove('active');
+        el.querySelectorAll('input').forEach(i => i.disabled = true);
+      });
       const val = document.getElementById('workout_type').value;
       if (val) {
         const el = document.getElementById('fields-' + toSlug(val));
-        if (el) el.classList.add('active');
+        if (el) {
+          el.classList.add('active');
+          el.querySelectorAll('input').forEach(i => i.disabled = false);
+        }
       }
     }
 
     function updateDecimal() {
       const durationInput = document.getElementById('duration');
-      const span = document.getElementById('decimal-duration');
-      if (!durationInput || !span) return;
+      const valueSpan = document.getElementById('decimal-value');
+      if (!durationInput || !valueSpan) return;
       const raw = durationInput.value.trim();
       const match = raw.match(/^(\d{2}):(\d{2}):(\d{2})$/);
       if (match) {
-        const h = parseInt(match[1], 10);
-        const m = parseInt(match[2], 10);
-        const s = parseInt(match[3], 10);
-        const dec = (h * 60 + m + s / 60).toFixed(4);
-        document.getElementById('decimal-value').textContent = dec;
-        span.style.display = 'block';
-      } else {
-        span.style.display = 'none';
-      }
+        const h = parseInt(match[1], 10), m = parseInt(match[2], 10), s = parseInt(match[3], 10);
+        valueSpan.textContent = (h * 60 + m + s / 60).toFixed(2);
+      } else { valueSpan.textContent = ''; }
+      calculateMPH(); calculateCaloriesPerMinute(); calculateTotalHeartBeats(); calculateMinutesPerMile(); calculateHeartBeatsPerMile();
     }
 
-    // Show fields for the currently selected workout type on page load
+    function calculateMPH() {
+      const milesInput = document.getElementById('miles');
+      const durationInput = document.getElementById('duration');
+      const mphValueSpan = document.getElementById('mph-value');
+      if (!milesInput || !durationInput || !mphValueSpan) return;
+      const miles = parseFloat(milesInput.value);
+      const match = durationInput.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      if (!isNaN(miles) && miles > 0 && match) {
+        const decimalMinutes = parseInt(match[1], 10) * 60 + parseInt(match[2], 10) + parseInt(match[3], 10) / 60;
+        mphValueSpan.textContent = (miles / (decimalMinutes / 60)).toFixed(2);
+      } else { mphValueSpan.textContent = ''; }
+    }
+
+    function calculateCaloriesPerMinute() {
+      const caloriesInput = document.getElementById('active_calories');
+      const durationInput = document.getElementById('duration');
+      const cpmValueSpan = document.getElementById('cpm-value');
+      if (!caloriesInput || !durationInput || !cpmValueSpan) return;
+      const calories = parseFloat(caloriesInput.value);
+      const match = durationInput.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      if (!isNaN(calories) && calories > 0 && match) {
+        const decimalMinutes = parseInt(match[1], 10) * 60 + parseInt(match[2], 10) + parseInt(match[3], 10) / 60;
+        cpmValueSpan.textContent = (calories / decimalMinutes).toFixed(2);
+      } else { cpmValueSpan.textContent = ''; }
+    }
+
+    function calculateCaloriesPerMile() {
+      const caloriesInput = document.getElementById('active_calories');
+      const milesInput = document.getElementById('miles');
+      const span = document.getElementById('cpm-mile-value');
+      if (!caloriesInput || !milesInput || !span) return;
+      const calories = parseFloat(caloriesInput.value), miles = parseFloat(milesInput.value);
+      if (!isNaN(calories) && calories > 0 && !isNaN(miles) && miles > 0) {
+        span.textContent = (calories / miles).toFixed(2);
+      } else { span.textContent = ''; }
+    }
+
+    function calculateTotalHeartBeats() {
+      const hrInput = document.getElementById('avg_heart_rate');
+      const durationInput = document.getElementById('duration');
+      const span = document.getElementById('thb-value');
+      if (!hrInput || !durationInput || !span) return;
+      const avgHR = parseFloat(hrInput.value);
+      const match = durationInput.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      if (!isNaN(avgHR) && avgHR > 0 && match) {
+        const decimalMinutes = parseInt(match[1], 10) * 60 + parseInt(match[2], 10) + parseInt(match[3], 10) / 60;
+        span.textContent = Math.round(avgHR * decimalMinutes);
+      } else { span.textContent = ''; }
+    }
+
+    function calculateMinutesPerMile() {
+      const durationInput = document.getElementById('duration');
+      const milesInput = document.getElementById('miles');
+      const span = document.getElementById('mpm-value');
+      if (!durationInput || !milesInput || !span) return;
+      const match = durationInput.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const miles = parseFloat(milesInput.value);
+      if (match && !isNaN(miles) && miles > 0) {
+        const decimalMinutes = parseInt(match[1], 10) * 60 + parseInt(match[2], 10) + parseInt(match[3], 10) / 60;
+        const minPerMile = decimalMinutes / miles;
+        const mins = Math.floor(minPerMile), secs = Math.round((minPerMile - mins) * 60);
+        span.textContent = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+      } else { span.textContent = ''; }
+    }
+
+    function calculateHeartBeatsPerMile() {
+      const hrInput = document.getElementById('avg_heart_rate');
+      const durationInput = document.getElementById('duration');
+      const milesInput = document.getElementById('miles');
+      const span = document.getElementById('hbpm-value');
+      if (!hrInput || !durationInput || !milesInput || !span) return;
+      const avgHR = parseFloat(hrInput.value), miles = parseFloat(milesInput.value);
+      const match = durationInput.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      if (!isNaN(avgHR) && avgHR > 0 && match && !isNaN(miles) && miles > 0) {
+        const decimalMinutes = parseInt(match[1], 10) * 60 + parseInt(match[2], 10) + parseInt(match[3], 10) / 60;
+        span.textContent = Math.round((avgHR * decimalMinutes) / miles);
+      } else { span.textContent = ''; }
+    }
+
+    function updateDecimalElliptical() {
+      const durationInput = document.getElementById('duration-elliptical');
+      const valueSpan = document.getElementById('decimal-value-elliptical');
+      if (!durationInput || !valueSpan) return;
+      const match = durationInput.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      if (match) {
+        valueSpan.textContent = (parseInt(match[1],10)*60 + parseInt(match[2],10) + parseInt(match[3],10)/60).toFixed(2);
+      } else { valueSpan.textContent = ''; }
+      calculateMPHElliptical(); calculateCaloriesPerMinuteElliptical(); calculateTotalHeartBeatsElliptical(); calculateMinutesPerMileElliptical(); calculateHeartBeatsPerMileElliptical();
+    }
+    function calculateMPHElliptical() {
+      const mi = parseFloat(document.getElementById('miles-elliptical')?.value);
+      const match = document.getElementById('duration-elliptical')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const span = document.getElementById('mph-value-elliptical');
+      if (!span) return;
+      if (!isNaN(mi) && mi > 0 && match) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; span.textContent = (mi/(d/60)).toFixed(2); } else { span.textContent = ''; }
+    }
+    function calculateCaloriesPerMinuteElliptical() {
+      const cal = parseFloat(document.getElementById('active_calories-elliptical')?.value);
+      const match = document.getElementById('duration-elliptical')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const span = document.getElementById('cpm-value-elliptical');
+      if (!span) return;
+      if (!isNaN(cal) && cal > 0 && match) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; span.textContent = (cal/d).toFixed(2); } else { span.textContent = ''; }
+    }
+    function calculateCaloriesPerMileElliptical() {
+      const cal = parseFloat(document.getElementById('active_calories-elliptical')?.value);
+      const mi = parseFloat(document.getElementById('miles-elliptical')?.value);
+      const span = document.getElementById('cpm-mile-value-elliptical');
+      if (!span) return;
+      if (!isNaN(cal) && cal > 0 && !isNaN(mi) && mi > 0) { span.textContent = (cal/mi).toFixed(2); } else { span.textContent = ''; }
+    }
+    function calculateTotalHeartBeatsElliptical() {
+      const hr = parseFloat(document.getElementById('avg_heart_rate-elliptical')?.value);
+      const match = document.getElementById('duration-elliptical')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const span = document.getElementById('thb-value-elliptical');
+      if (!span) return;
+      if (!isNaN(hr) && hr > 0 && match) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; span.textContent = Math.round(hr*d); } else { span.textContent = ''; }
+    }
+    function calculateMinutesPerMileElliptical() {
+      const match = document.getElementById('duration-elliptical')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const mi = parseFloat(document.getElementById('miles-elliptical')?.value);
+      const span = document.getElementById('mpm-value-elliptical');
+      if (!span) return;
+      if (match && !isNaN(mi) && mi > 0) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; const mpm = d/mi; const mins = Math.floor(mpm), secs = Math.round((mpm-mins)*60); span.textContent = String(mins).padStart(2,'0')+':'+String(secs).padStart(2,'0'); } else { span.textContent = ''; }
+    }
+    function calculateHeartBeatsPerMileElliptical() {
+      const hr = parseFloat(document.getElementById('avg_heart_rate-elliptical')?.value);
+      const match = document.getElementById('duration-elliptical')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const mi = parseFloat(document.getElementById('miles-elliptical')?.value);
+      const span = document.getElementById('hbpm-value-elliptical');
+      if (!span) return;
+      if (!isNaN(hr) && hr > 0 && match && !isNaN(mi) && mi > 0) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; span.textContent = Math.round((hr*d)/mi); } else { span.textContent = ''; }
+    }
+
+    function updateMilesFromMeters() {
+      const meters = parseFloat(document.getElementById('meters-rowing')?.value);
+      const milesInput = document.getElementById('miles-rowing');
+      if (!milesInput) return;
+      if (!isNaN(meters) && meters > 0) {
+        milesInput.value = (meters / 1609.344).toFixed(4);
+      } else {
+        milesInput.value = '';
+      }
+      calculateMPHRowing(); calculateCaloriesPerMileRowing(); calculateMinutesPerMileRowing(); calculateHeartBeatsPerMileRowing();
+    }
+
+    function updateDecimalRowing() {
+      const durationInput = document.getElementById('duration-rowing');
+      const valueSpan = document.getElementById('decimal-value-rowing');
+      if (!durationInput || !valueSpan) return;
+      const match = durationInput.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      if (match) {
+        valueSpan.textContent = (parseInt(match[1], 10) * 60 + parseInt(match[2], 10) + parseInt(match[3], 10) / 60).toFixed(2);
+      } else { valueSpan.textContent = ''; }
+      calculateMPHRowing(); calculateCaloriesPerMinuteRowing(); calculateTotalHeartBeatsRowing(); calculateMinutesPerMileRowing(); calculateHeartBeatsPerMileRowing();
+    }
+
+    function calculateMPHRowing() {
+      const milesInput = document.getElementById('miles-rowing');
+      const durationInput = document.getElementById('duration-rowing');
+      const span = document.getElementById('mph-value-rowing');
+      if (!milesInput || !durationInput || !span) return;
+      const miles = parseFloat(milesInput.value);
+      const match = durationInput.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      if (!isNaN(miles) && miles > 0 && match) {
+        const decimalMinutes = parseInt(match[1], 10) * 60 + parseInt(match[2], 10) + parseInt(match[3], 10) / 60;
+        span.textContent = (miles / (decimalMinutes / 60)).toFixed(2);
+      } else { span.textContent = ''; }
+    }
+
+    function calculateCaloriesPerMinuteRowing() {
+      const caloriesInput = document.getElementById('active_calories-rowing');
+      const durationInput = document.getElementById('duration-rowing');
+      const span = document.getElementById('cpm-value-rowing');
+      if (!caloriesInput || !durationInput || !span) return;
+      const calories = parseFloat(caloriesInput.value);
+      const match = durationInput.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      if (!isNaN(calories) && calories > 0 && match) {
+        const decimalMinutes = parseInt(match[1], 10) * 60 + parseInt(match[2], 10) + parseInt(match[3], 10) / 60;
+        span.textContent = (calories / decimalMinutes).toFixed(2);
+      } else { span.textContent = ''; }
+    }
+
+    function calculateCaloriesPerMileRowing() {
+      const caloriesInput = document.getElementById('active_calories-rowing');
+      const milesInput = document.getElementById('miles-rowing');
+      const span = document.getElementById('cpm-mile-value-rowing');
+      if (!caloriesInput || !milesInput || !span) return;
+      const calories = parseFloat(caloriesInput.value), miles = parseFloat(milesInput.value);
+      if (!isNaN(calories) && calories > 0 && !isNaN(miles) && miles > 0) {
+        span.textContent = (calories / miles).toFixed(2);
+      } else { span.textContent = ''; }
+    }
+
+    function calculateTotalHeartBeatsRowing() {
+      const hrInput = document.getElementById('avg_heart_rate-rowing');
+      const durationInput = document.getElementById('duration-rowing');
+      const span = document.getElementById('thb-value-rowing');
+      if (!hrInput || !durationInput || !span) return;
+      const avgHR = parseFloat(hrInput.value);
+      const match = durationInput.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      if (!isNaN(avgHR) && avgHR > 0 && match) {
+        const decimalMinutes = parseInt(match[1], 10) * 60 + parseInt(match[2], 10) + parseInt(match[3], 10) / 60;
+        span.textContent = Math.round(avgHR * decimalMinutes);
+      } else { span.textContent = ''; }
+    }
+
+    function calculateMinutesPerMileRowing() {
+      const durationInput = document.getElementById('duration-rowing');
+      const milesInput = document.getElementById('miles-rowing');
+      const span = document.getElementById('mpm-value-rowing');
+      if (!durationInput || !milesInput || !span) return;
+      const match = durationInput.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const miles = parseFloat(milesInput.value);
+      if (match && !isNaN(miles) && miles > 0) {
+        const decimalMinutes = parseInt(match[1], 10) * 60 + parseInt(match[2], 10) + parseInt(match[3], 10) / 60;
+        const minPerMile = decimalMinutes / miles;
+        const mins = Math.floor(minPerMile), secs = Math.round((minPerMile - mins) * 60);
+        span.textContent = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+      } else { span.textContent = ''; }
+    }
+
+    function calculateHeartBeatsPerMileRowing() {
+      const hrInput = document.getElementById('avg_heart_rate-rowing');
+      const durationInput = document.getElementById('duration-rowing');
+      const milesInput = document.getElementById('miles-rowing');
+      const span = document.getElementById('hbpm-value-rowing');
+      if (!hrInput || !durationInput || !milesInput || !span) return;
+      const avgHR = parseFloat(hrInput.value), miles = parseFloat(milesInput.value);
+      const match = durationInput.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      if (!isNaN(avgHR) && avgHR > 0 && match && !isNaN(miles) && miles > 0) {
+        const decimalMinutes = parseInt(match[1], 10) * 60 + parseInt(match[2], 10) + parseInt(match[3], 10) / 60;
+        span.textContent = Math.round((avgHR * decimalMinutes) / miles);
+      } else { span.textContent = ''; }
+    }
+
+    function updateDecimalStairStepper() {
+      const durationInput = document.getElementById('duration-stair-stepper');
+      const valueSpan = document.getElementById('decimal-value-stair-stepper');
+      if (!durationInput || !valueSpan) return;
+      const match = durationInput.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      if (match) { valueSpan.textContent = (parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60).toFixed(2); } else { valueSpan.textContent = ''; }
+      calculateMPHStairStepper(); calculateCaloriesPerMinuteStairStepper(); calculateTotalHeartBeatsStairStepper(); calculateMinutesPerMileStairStepper(); calculateHeartBeatsPerMileStairStepper();
+    }
+    function calculateMPHStairStepper() {
+      const mi = parseFloat(document.getElementById('miles-stair-stepper')?.value);
+      const match = document.getElementById('duration-stair-stepper')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const span = document.getElementById('mph-value-stair-stepper');
+      if (!span) return;
+      if (!isNaN(mi) && mi > 0 && match) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; span.textContent = (mi/(d/60)).toFixed(2); } else { span.textContent = ''; }
+    }
+    function calculateCaloriesPerMinuteStairStepper() {
+      const cal = parseFloat(document.getElementById('active_calories-stair-stepper')?.value);
+      const match = document.getElementById('duration-stair-stepper')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const span = document.getElementById('cpm-value-stair-stepper');
+      if (!span) return;
+      if (!isNaN(cal) && cal > 0 && match) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; span.textContent = (cal/d).toFixed(2); } else { span.textContent = ''; }
+    }
+    function calculateCaloriesPerMileStairStepper() {
+      const cal = parseFloat(document.getElementById('active_calories-stair-stepper')?.value);
+      const mi = parseFloat(document.getElementById('miles-stair-stepper')?.value);
+      const span = document.getElementById('cpm-mile-value-stair-stepper');
+      if (!span) return;
+      if (!isNaN(cal) && cal > 0 && !isNaN(mi) && mi > 0) { span.textContent = (cal/mi).toFixed(2); } else { span.textContent = ''; }
+    }
+    function calculateTotalHeartBeatsStairStepper() {
+      const hr = parseFloat(document.getElementById('avg_heart_rate-stair-stepper')?.value);
+      const match = document.getElementById('duration-stair-stepper')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const span = document.getElementById('thb-value-stair-stepper');
+      if (!span) return;
+      if (!isNaN(hr) && hr > 0 && match) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; span.textContent = Math.round(hr*d); } else { span.textContent = ''; }
+    }
+    function calculateMinutesPerMileStairStepper() {
+      const match = document.getElementById('duration-stair-stepper')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const mi = parseFloat(document.getElementById('miles-stair-stepper')?.value);
+      const span = document.getElementById('mpm-value-stair-stepper');
+      if (!span) return;
+      if (match && !isNaN(mi) && mi > 0) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; const mpm = d/mi; const mins = Math.floor(mpm), secs = Math.round((mpm-mins)*60); span.textContent = String(mins).padStart(2,'0')+':'+String(secs).padStart(2,'0'); } else { span.textContent = ''; }
+    }
+    function calculateHeartBeatsPerMileStairStepper() {
+      const hr = parseFloat(document.getElementById('avg_heart_rate-stair-stepper')?.value);
+      const match = document.getElementById('duration-stair-stepper')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const mi = parseFloat(document.getElementById('miles-stair-stepper')?.value);
+      const span = document.getElementById('hbpm-value-stair-stepper');
+      if (!span) return;
+      if (!isNaN(hr) && hr > 0 && match && !isNaN(mi) && mi > 0) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; span.textContent = Math.round((hr*d)/mi); } else { span.textContent = ''; }
+    }
+
+    function updateDecimalOutdoorWalk() {
+      const durationInput = document.getElementById('duration-outdoor-walk');
+      const valueSpan = document.getElementById('decimal-value-outdoor-walk');
+      if (!durationInput || !valueSpan) return;
+      const match = durationInput.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      if (match) { valueSpan.textContent = (parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60).toFixed(2); } else { valueSpan.textContent = ''; }
+      calculateMPHOutdoorWalk(); calculateCaloriesPerMinuteOutdoorWalk(); calculateTotalHeartBeatsOutdoorWalk(); calculateMinutesPerMileOutdoorWalk(); calculateHeartBeatsPerMileOutdoorWalk();
+    }
+    function calculateMPHOutdoorWalk() {
+      const mi = parseFloat(document.getElementById('miles-outdoor-walk')?.value);
+      const match = document.getElementById('duration-outdoor-walk')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const span = document.getElementById('mph-value-outdoor-walk');
+      if (!span) return;
+      if (!isNaN(mi) && mi > 0 && match) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; span.textContent = (mi/(d/60)).toFixed(2); } else { span.textContent = ''; }
+    }
+    function calculateCaloriesPerMinuteOutdoorWalk() {
+      const cal = parseFloat(document.getElementById('active_calories-outdoor-walk')?.value);
+      const match = document.getElementById('duration-outdoor-walk')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const span = document.getElementById('cpm-value-outdoor-walk');
+      if (!span) return;
+      if (!isNaN(cal) && cal > 0 && match) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; span.textContent = (cal/d).toFixed(2); } else { span.textContent = ''; }
+    }
+    function calculateCaloriesPerMileOutdoorWalk() {
+      const cal = parseFloat(document.getElementById('active_calories-outdoor-walk')?.value);
+      const mi = parseFloat(document.getElementById('miles-outdoor-walk')?.value);
+      const span = document.getElementById('cpm-mile-value-outdoor-walk');
+      if (!span) return;
+      if (!isNaN(cal) && cal > 0 && !isNaN(mi) && mi > 0) { span.textContent = (cal/mi).toFixed(2); } else { span.textContent = ''; }
+    }
+    function calculateTotalHeartBeatsOutdoorWalk() {
+      const hr = parseFloat(document.getElementById('avg_heart_rate-outdoor-walk')?.value);
+      const match = document.getElementById('duration-outdoor-walk')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const span = document.getElementById('thb-value-outdoor-walk');
+      if (!span) return;
+      if (!isNaN(hr) && hr > 0 && match) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; span.textContent = Math.round(hr*d); } else { span.textContent = ''; }
+    }
+    function calculateMinutesPerMileOutdoorWalk() {
+      const match = document.getElementById('duration-outdoor-walk')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const mi = parseFloat(document.getElementById('miles-outdoor-walk')?.value);
+      const span = document.getElementById('mpm-value-outdoor-walk');
+      if (!span) return;
+      if (match && !isNaN(mi) && mi > 0) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; const mpm = d/mi; const mins = Math.floor(mpm), secs = Math.round((mpm-mins)*60); span.textContent = String(mins).padStart(2,'0')+':'+String(secs).padStart(2,'0'); } else { span.textContent = ''; }
+    }
+    function calculateHeartBeatsPerMileOutdoorWalk() {
+      const hr = parseFloat(document.getElementById('avg_heart_rate-outdoor-walk')?.value);
+      const match = document.getElementById('duration-outdoor-walk')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const mi = parseFloat(document.getElementById('miles-outdoor-walk')?.value);
+      const span = document.getElementById('hbpm-value-outdoor-walk');
+      if (!span) return;
+      if (!isNaN(hr) && hr > 0 && match && !isNaN(mi) && mi > 0) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; span.textContent = Math.round((hr*d)/mi); } else { span.textContent = ''; }
+    }
+
+    function updateDecimalOutdoorRun() {
+      const durationInput = document.getElementById('duration-outdoor-run');
+      const valueSpan = document.getElementById('decimal-value-outdoor-run');
+      if (!durationInput || !valueSpan) return;
+      const match = durationInput.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      if (match) { valueSpan.textContent = (parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60).toFixed(2); } else { valueSpan.textContent = ''; }
+      calculateMPHOutdoorRun(); calculateCaloriesPerMinuteOutdoorRun(); calculateTotalHeartBeatsOutdoorRun(); calculateMinutesPerMileOutdoorRun(); calculateHeartBeatsPerMileOutdoorRun();
+    }
+    function calculateMPHOutdoorRun() {
+      const mi = parseFloat(document.getElementById('miles-outdoor-run')?.value);
+      const match = document.getElementById('duration-outdoor-run')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const span = document.getElementById('mph-value-outdoor-run');
+      if (!span) return;
+      if (!isNaN(mi) && mi > 0 && match) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; span.textContent = (mi/(d/60)).toFixed(2); } else { span.textContent = ''; }
+    }
+    function calculateCaloriesPerMinuteOutdoorRun() {
+      const cal = parseFloat(document.getElementById('active_calories-outdoor-run')?.value);
+      const match = document.getElementById('duration-outdoor-run')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const span = document.getElementById('cpm-value-outdoor-run');
+      if (!span) return;
+      if (!isNaN(cal) && cal > 0 && match) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; span.textContent = (cal/d).toFixed(2); } else { span.textContent = ''; }
+    }
+    function calculateCaloriesPerMileOutdoorRun() {
+      const cal = parseFloat(document.getElementById('active_calories-outdoor-run')?.value);
+      const mi = parseFloat(document.getElementById('miles-outdoor-run')?.value);
+      const span = document.getElementById('cpm-mile-value-outdoor-run');
+      if (!span) return;
+      if (!isNaN(cal) && cal > 0 && !isNaN(mi) && mi > 0) { span.textContent = (cal/mi).toFixed(2); } else { span.textContent = ''; }
+    }
+    function calculateTotalHeartBeatsOutdoorRun() {
+      const hr = parseFloat(document.getElementById('avg_heart_rate-outdoor-run')?.value);
+      const match = document.getElementById('duration-outdoor-run')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const span = document.getElementById('thb-value-outdoor-run');
+      if (!span) return;
+      if (!isNaN(hr) && hr > 0 && match) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; span.textContent = Math.round(hr*d); } else { span.textContent = ''; }
+    }
+    function calculateMinutesPerMileOutdoorRun() {
+      const match = document.getElementById('duration-outdoor-run')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const mi = parseFloat(document.getElementById('miles-outdoor-run')?.value);
+      const span = document.getElementById('mpm-value-outdoor-run');
+      if (!span) return;
+      if (match && !isNaN(mi) && mi > 0) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; const mpm = d/mi; const mins = Math.floor(mpm), secs = Math.round((mpm-mins)*60); span.textContent = String(mins).padStart(2,'0')+':'+String(secs).padStart(2,'0'); } else { span.textContent = ''; }
+    }
+    function calculateHeartBeatsPerMileOutdoorRun() {
+      const hr = parseFloat(document.getElementById('avg_heart_rate-outdoor-run')?.value);
+      const match = document.getElementById('duration-outdoor-run')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const mi = parseFloat(document.getElementById('miles-outdoor-run')?.value);
+      const span = document.getElementById('hbpm-value-outdoor-run');
+      if (!span) return;
+      if (!isNaN(hr) && hr > 0 && match && !isNaN(mi) && mi > 0) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; span.textContent = Math.round((hr*d)/mi); } else { span.textContent = ''; }
+    }
+
+    function updateDecimalTreadmill() {
+      const durationInput = document.getElementById('duration-treadmill');
+      const valueSpan = document.getElementById('decimal-value-treadmill');
+      if (!durationInput || !valueSpan) return;
+      const match = durationInput.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      if (match) {
+        valueSpan.textContent = (parseInt(match[1], 10) * 60 + parseInt(match[2], 10) + parseInt(match[3], 10) / 60).toFixed(2);
+      } else { valueSpan.textContent = ''; }
+      calculateMPHTreadmill(); calculateCaloriesPerMinuteTreadmill(); calculateTotalHeartBeatsTreadmill(); calculateMinutesPerMileTreadmill(); calculateHeartBeatsPerMileTreadmill();
+    }
+
+    function calculateMPHTreadmill() {
+      const milesInput = document.getElementById('miles-treadmill');
+      const durationInput = document.getElementById('duration-treadmill');
+      const span = document.getElementById('mph-value-treadmill');
+      if (!milesInput || !durationInput || !span) return;
+      const miles = parseFloat(milesInput.value);
+      const match = durationInput.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      if (!isNaN(miles) && miles > 0 && match) {
+        const decimalMinutes = parseInt(match[1], 10) * 60 + parseInt(match[2], 10) + parseInt(match[3], 10) / 60;
+        span.textContent = (miles / (decimalMinutes / 60)).toFixed(2);
+      } else { span.textContent = ''; }
+    }
+
+    function calculateCaloriesPerMinuteTreadmill() {
+      const caloriesInput = document.getElementById('active_calories-treadmill');
+      const durationInput = document.getElementById('duration-treadmill');
+      const span = document.getElementById('cpm-value-treadmill');
+      if (!caloriesInput || !durationInput || !span) return;
+      const calories = parseFloat(caloriesInput.value);
+      const match = durationInput.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      if (!isNaN(calories) && calories > 0 && match) {
+        const decimalMinutes = parseInt(match[1], 10) * 60 + parseInt(match[2], 10) + parseInt(match[3], 10) / 60;
+        span.textContent = (calories / decimalMinutes).toFixed(2);
+      } else { span.textContent = ''; }
+    }
+
+    function calculateCaloriesPerMileTreadmill() {
+      const caloriesInput = document.getElementById('active_calories-treadmill');
+      const milesInput = document.getElementById('miles-treadmill');
+      const span = document.getElementById('cpm-mile-value-treadmill');
+      if (!caloriesInput || !milesInput || !span) return;
+      const calories = parseFloat(caloriesInput.value), miles = parseFloat(milesInput.value);
+      if (!isNaN(calories) && calories > 0 && !isNaN(miles) && miles > 0) {
+        span.textContent = (calories / miles).toFixed(2);
+      } else { span.textContent = ''; }
+    }
+
+    function calculateTotalHeartBeatsTreadmill() {
+      const hrInput = document.getElementById('avg_heart_rate-treadmill');
+      const durationInput = document.getElementById('duration-treadmill');
+      const span = document.getElementById('thb-value-treadmill');
+      if (!hrInput || !durationInput || !span) return;
+      const avgHR = parseFloat(hrInput.value);
+      const match = durationInput.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      if (!isNaN(avgHR) && avgHR > 0 && match) {
+        const decimalMinutes = parseInt(match[1], 10) * 60 + parseInt(match[2], 10) + parseInt(match[3], 10) / 60;
+        span.textContent = Math.round(avgHR * decimalMinutes);
+      } else { span.textContent = ''; }
+    }
+
+    function calculateMinutesPerMileTreadmill() {
+      const durationInput = document.getElementById('duration-treadmill');
+      const milesInput = document.getElementById('miles-treadmill');
+      const span = document.getElementById('mpm-value-treadmill');
+      if (!durationInput || !milesInput || !span) return;
+      const match = durationInput.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const miles = parseFloat(milesInput.value);
+      if (match && !isNaN(miles) && miles > 0) {
+        const decimalMinutes = parseInt(match[1], 10) * 60 + parseInt(match[2], 10) + parseInt(match[3], 10) / 60;
+        const minPerMile = decimalMinutes / miles;
+        const mins = Math.floor(minPerMile), secs = Math.round((minPerMile - mins) * 60);
+        span.textContent = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+      } else { span.textContent = ''; }
+    }
+
+    function calculateHeartBeatsPerMileTreadmill() {
+      const hrInput = document.getElementById('avg_heart_rate-treadmill');
+      const durationInput = document.getElementById('duration-treadmill');
+      const milesInput = document.getElementById('miles-treadmill');
+      const span = document.getElementById('hbpm-value-treadmill');
+      if (!hrInput || !durationInput || !milesInput || !span) return;
+      const avgHR = parseFloat(hrInput.value), miles = parseFloat(milesInput.value);
+      const match = durationInput.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      if (!isNaN(avgHR) && avgHR > 0 && match && !isNaN(miles) && miles > 0) {
+        const decimalMinutes = parseInt(match[1], 10) * 60 + parseInt(match[2], 10) + parseInt(match[3], 10) / 60;
+        span.textContent = Math.round((avgHR * decimalMinutes) / miles);
+      } else { span.textContent = ''; }
+    }
+
+    function updateDecimalIndoorCycle() {
+      const match = document.getElementById('duration-indoor-cycle')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const span = document.getElementById('decimal-value-indoor-cycle');
+      if (span) span.textContent = match ? (parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60).toFixed(2) : '';
+      calculateMPHIndoorCycle(); calculateCaloriesPerMinuteIndoorCycle(); calculateTotalHeartBeatsIndoorCycle(); calculateMinutesPerMileIndoorCycle(); calculateHeartBeatsPerMileIndoorCycle();
+    }
+    function calculateMPHIndoorCycle() {
+      const mi = parseFloat(document.getElementById('miles-indoor-cycle')?.value);
+      const match = document.getElementById('duration-indoor-cycle')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const span = document.getElementById('mph-value-indoor-cycle');
+      if (!span) return;
+      if (!isNaN(mi) && mi > 0 && match) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; span.textContent = (mi/(d/60)).toFixed(2); } else { span.textContent = ''; }
+    }
+    function calculateCaloriesPerMinuteIndoorCycle() {
+      const cal = parseFloat(document.getElementById('active_calories-indoor-cycle')?.value);
+      const match = document.getElementById('duration-indoor-cycle')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const span = document.getElementById('cpm-value-indoor-cycle');
+      if (!span) return;
+      if (!isNaN(cal) && cal > 0 && match) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; span.textContent = (cal/d).toFixed(2); } else { span.textContent = ''; }
+    }
+    function calculateCaloriesPerMileIndoorCycle() {
+      const cal = parseFloat(document.getElementById('active_calories-indoor-cycle')?.value);
+      const mi = parseFloat(document.getElementById('miles-indoor-cycle')?.value);
+      const span = document.getElementById('cpm-mile-value-indoor-cycle');
+      if (!span) return;
+      if (!isNaN(cal) && cal > 0 && !isNaN(mi) && mi > 0) { span.textContent = (cal/mi).toFixed(2); } else { span.textContent = ''; }
+    }
+    function calculateTotalHeartBeatsIndoorCycle() {
+      const hr = parseFloat(document.getElementById('avg_heart_rate-indoor-cycle')?.value);
+      const match = document.getElementById('duration-indoor-cycle')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const span = document.getElementById('thb-value-indoor-cycle');
+      if (!span) return;
+      if (!isNaN(hr) && hr > 0 && match) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; span.textContent = Math.round(hr*d); } else { span.textContent = ''; }
+    }
+    function calculateMinutesPerMileIndoorCycle() {
+      const match = document.getElementById('duration-indoor-cycle')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const mi = parseFloat(document.getElementById('miles-indoor-cycle')?.value);
+      const span = document.getElementById('mpm-value-indoor-cycle');
+      if (!span) return;
+      if (match && !isNaN(mi) && mi > 0) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; const mpm = d/mi; const mins = Math.floor(mpm), secs = Math.round((mpm-mins)*60); span.textContent = String(mins).padStart(2,'0')+':'+String(secs).padStart(2,'0'); } else { span.textContent = ''; }
+    }
+    function calculateHeartBeatsPerMileIndoorCycle() {
+      const hr = parseFloat(document.getElementById('avg_heart_rate-indoor-cycle')?.value);
+      const match = document.getElementById('duration-indoor-cycle')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const mi = parseFloat(document.getElementById('miles-indoor-cycle')?.value);
+      const span = document.getElementById('hbpm-value-indoor-cycle');
+      if (!span) return;
+      if (!isNaN(hr) && hr > 0 && match && !isNaN(mi) && mi > 0) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; span.textContent = Math.round((hr*d)/mi); } else { span.textContent = ''; }
+    }
+
+    function updateDecimalOutdoorCycle() {
+      const match = document.getElementById('duration-outdoor-cycle')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const span = document.getElementById('decimal-value-outdoor-cycle');
+      if (span) span.textContent = match ? (parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60).toFixed(2) : '';
+      calculateMPHOutdoorCycle(); calculateCaloriesPerMinuteOutdoorCycle(); calculateTotalHeartBeatsOutdoorCycle(); calculateMinutesPerMileOutdoorCycle(); calculateHeartBeatsPerMileOutdoorCycle();
+    }
+    function calculateMPHOutdoorCycle() {
+      const mi = parseFloat(document.getElementById('miles-outdoor-cycle')?.value);
+      const match = document.getElementById('duration-outdoor-cycle')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const span = document.getElementById('mph-value-outdoor-cycle');
+      if (!span) return;
+      if (!isNaN(mi) && mi > 0 && match) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; span.textContent = (mi/(d/60)).toFixed(2); } else { span.textContent = ''; }
+    }
+    function calculateCaloriesPerMinuteOutdoorCycle() {
+      const cal = parseFloat(document.getElementById('active_calories-outdoor-cycle')?.value);
+      const match = document.getElementById('duration-outdoor-cycle')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const span = document.getElementById('cpm-value-outdoor-cycle');
+      if (!span) return;
+      if (!isNaN(cal) && cal > 0 && match) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; span.textContent = (cal/d).toFixed(2); } else { span.textContent = ''; }
+    }
+    function calculateCaloriesPerMileOutdoorCycle() {
+      const cal = parseFloat(document.getElementById('active_calories-outdoor-cycle')?.value);
+      const mi = parseFloat(document.getElementById('miles-outdoor-cycle')?.value);
+      const span = document.getElementById('cpm-mile-value-outdoor-cycle');
+      if (!span) return;
+      if (!isNaN(cal) && cal > 0 && !isNaN(mi) && mi > 0) { span.textContent = (cal/mi).toFixed(2); } else { span.textContent = ''; }
+    }
+    function calculateTotalHeartBeatsOutdoorCycle() {
+      const hr = parseFloat(document.getElementById('avg_heart_rate-outdoor-cycle')?.value);
+      const match = document.getElementById('duration-outdoor-cycle')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const span = document.getElementById('thb-value-outdoor-cycle');
+      if (!span) return;
+      if (!isNaN(hr) && hr > 0 && match) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; span.textContent = Math.round(hr*d); } else { span.textContent = ''; }
+    }
+    function calculateMinutesPerMileOutdoorCycle() {
+      const match = document.getElementById('duration-outdoor-cycle')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const mi = parseFloat(document.getElementById('miles-outdoor-cycle')?.value);
+      const span = document.getElementById('mpm-value-outdoor-cycle');
+      if (!span) return;
+      if (match && !isNaN(mi) && mi > 0) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; const mpm = d/mi; const mins = Math.floor(mpm), secs = Math.round((mpm-mins)*60); span.textContent = String(mins).padStart(2,'0')+':'+String(secs).padStart(2,'0'); } else { span.textContent = ''; }
+    }
+    function calculateHeartBeatsPerMileOutdoorCycle() {
+      const hr = parseFloat(document.getElementById('avg_heart_rate-outdoor-cycle')?.value);
+      const match = document.getElementById('duration-outdoor-cycle')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const mi = parseFloat(document.getElementById('miles-outdoor-cycle')?.value);
+      const span = document.getElementById('hbpm-value-outdoor-cycle');
+      if (!span) return;
+      if (!isNaN(hr) && hr > 0 && match && !isNaN(mi) && mi > 0) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; span.textContent = Math.round((hr*d)/mi); } else { span.textContent = ''; }
+    }
+
+    function updateDecimalPeleton() {
+      const match = document.getElementById('duration-peleton')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const span = document.getElementById('decimal-value-peleton');
+      if (span) span.textContent = match ? (parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60).toFixed(2) : '';
+      calculateMPHPeleton(); calculateCaloriesPerMinutePeleton(); calculateTotalHeartBeatsPeleton(); calculateMinutesPerMilePeleton(); calculateHeartBeatsPerMilePeleton();
+    }
+    function calculateMPHPeleton() {
+      const mi = parseFloat(document.getElementById('miles-peleton')?.value);
+      const match = document.getElementById('duration-peleton')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const span = document.getElementById('mph-value-peleton');
+      if (!span) return;
+      if (!isNaN(mi) && mi > 0 && match) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; span.textContent = (mi/(d/60)).toFixed(2); } else { span.textContent = ''; }
+    }
+    function calculateCaloriesPerMinutePeleton() {
+      const cal = parseFloat(document.getElementById('active_calories-peleton')?.value);
+      const match = document.getElementById('duration-peleton')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const span = document.getElementById('cpm-value-peleton');
+      if (!span) return;
+      if (!isNaN(cal) && cal > 0 && match) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; span.textContent = (cal/d).toFixed(2); } else { span.textContent = ''; }
+    }
+    function calculateCaloriesPerMilePeleton() {
+      const cal = parseFloat(document.getElementById('active_calories-peleton')?.value);
+      const mi = parseFloat(document.getElementById('miles-peleton')?.value);
+      const span = document.getElementById('cpm-mile-value-peleton');
+      if (!span) return;
+      if (!isNaN(cal) && cal > 0 && !isNaN(mi) && mi > 0) { span.textContent = (cal/mi).toFixed(2); } else { span.textContent = ''; }
+    }
+    function calculateTotalHeartBeatsPeleton() {
+      const hr = parseFloat(document.getElementById('avg_heart_rate-peleton')?.value);
+      const match = document.getElementById('duration-peleton')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const span = document.getElementById('thb-value-peleton');
+      if (!span) return;
+      if (!isNaN(hr) && hr > 0 && match) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; span.textContent = Math.round(hr*d); } else { span.textContent = ''; }
+    }
+    function calculateMinutesPerMilePeleton() {
+      const match = document.getElementById('duration-peleton')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const mi = parseFloat(document.getElementById('miles-peleton')?.value);
+      const span = document.getElementById('mpm-value-peleton');
+      if (!span) return;
+      if (match && !isNaN(mi) && mi > 0) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; const mpm = d/mi; const mins = Math.floor(mpm), secs = Math.round((mpm-mins)*60); span.textContent = String(mins).padStart(2,'0')+':'+String(secs).padStart(2,'0'); } else { span.textContent = ''; }
+    }
+    function calculateHeartBeatsPerMilePeleton() {
+      const hr = parseFloat(document.getElementById('avg_heart_rate-peleton')?.value);
+      const match = document.getElementById('duration-peleton')?.value.trim().match(/^(\d{2}):(\d{2}):(\d{2})$/);
+      const mi = parseFloat(document.getElementById('miles-peleton')?.value);
+      const span = document.getElementById('hbpm-value-peleton');
+      if (!span) return;
+      if (!isNaN(hr) && hr > 0 && match && !isNaN(mi) && mi > 0) { const d = parseInt(match[1],10)*60+parseInt(match[2],10)+parseInt(match[3],10)/60; span.textContent = Math.round((hr*d)/mi); } else { span.textContent = ''; }
+    }
+
     showFields();
-    // Also trigger decimal preview if duration is pre-filled
-    updateDecimal();
+    updateDecimal(); updateDecimalElliptical(); updateDecimalIndoorCycle(); updateDecimalOutdoorCycle(); updateDecimalOutdoorWalk(); updateDecimalPeleton(); updateDecimalRowing(); updateDecimalStairStepper(); updateDecimalTreadmill();
+    calculateCaloriesPerMile(); calculateCaloriesPerMileElliptical(); calculateCaloriesPerMileIndoorCycle(); calculateCaloriesPerMileOutdoorCycle(); calculateCaloriesPerMileOutdoorWalk(); calculateCaloriesPerMilePeleton(); calculateCaloriesPerMileRowing(); calculateCaloriesPerMileStairStepper(); calculateCaloriesPerMileTreadmill();
+    calculateTotalHeartBeats(); calculateTotalHeartBeatsElliptical(); calculateTotalHeartBeatsIndoorCycle(); calculateTotalHeartBeatsOutdoorCycle(); calculateTotalHeartBeatsOutdoorWalk(); calculateTotalHeartBeatsPeleton(); calculateTotalHeartBeatsRowing(); calculateTotalHeartBeatsStairStepper(); calculateTotalHeartBeatsTreadmill();
+    calculateMinutesPerMile(); calculateMinutesPerMileElliptical(); calculateMinutesPerMileIndoorCycle(); calculateMinutesPerMileOutdoorCycle(); calculateMinutesPerMileOutdoorWalk(); calculateMinutesPerMilePeleton(); calculateMinutesPerMileRowing(); calculateMinutesPerMileStairStepper(); calculateMinutesPerMileTreadmill();
+    calculateHeartBeatsPerMile(); calculateHeartBeatsPerMileElliptical(); calculateHeartBeatsPerMileIndoorCycle(); calculateHeartBeatsPerMileOutdoorCycle(); calculateHeartBeatsPerMileOutdoorWalk(); calculateHeartBeatsPerMilePeleton(); calculateHeartBeatsPerMileRowing(); calculateHeartBeatsPerMileStairStepper(); calculateHeartBeatsPerMileTreadmill();
   </script>
 </body>
 </html>
