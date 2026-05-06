@@ -26,6 +26,15 @@
   {% endwith %}
 
   <form id="update-form" method="POST" action="{{ url_for('update_workout', workout_id=workout.id) }}">
+    <!-- Hidden fields for calculated values -->
+    <input type="hidden" name="decimal_duration" id="hidden-decimal_duration" value="{{ workout.decimal_duration or '' }}">
+    <input type="hidden" name="mph" id="hidden-mph" value="{{ workout.mph or '' }}">
+    <input type="hidden" name="minutes_per_mile" id="hidden-minutes_per_mile" value="{{ workout.minutes_per_mile or '' }}">
+    <input type="hidden" name="calories_per_minute" id="hidden-calories_per_minute" value="{{ workout.calories_per_minute or '' }}">
+    <input type="hidden" name="calories_per_mile" id="hidden-calories_per_mile" value="{{ workout.calories_per_mile or '' }}">
+    <input type="hidden" name="total_heart_beats" id="hidden-total_heart_beats" value="{{ workout.total_heart_beats or '' }}">
+    <input type="hidden" name="heart_beats_per_mile" id="hidden-heart_beats_per_mile" value="{{ workout.heart_beats_per_mile or '' }}">
+
     <table>
       <tbody>
         <tr><td><label for="workout_type">Workout Type</label></td><td><select name="workout_type" id="workout_type" required onchange="showFields()"><option value="">-- Select --</option>{% for wt in workout_types %}<option value="{{ wt }}" {% if wt == workout.workout_type %}selected{% endif %}>{{ wt }}</option>{% endfor %}</select></td></tr>
@@ -227,6 +236,46 @@
   </form>
 
   <script>
+    function captureCalculatedValues() {
+      const workoutType = document.getElementById('workout_type').value.toLowerCase().replace(/\s+/g, '-');
+
+      // Helper to find span by ID (try with and without workout type suffix)
+      const findSpan = (baseName) => {
+        let span = document.getElementById(`${baseName}-${workoutType}`);
+        if (!span) span = document.getElementById(baseName);
+        return span;
+      };
+
+      // Get the span elements for the current workout type
+      const decimalSpan = findSpan('decimal-value');
+      const mphSpan = findSpan('mph-value');
+      const mpmSpan = findSpan('mpm-value');
+      const cpmSpan = findSpan('cpm-value');
+      const cpmileSpan = findSpan('cpm-mile-value');
+      const thbSpan = findSpan('thb-value');
+      const hbpmSpan = findSpan('hbpm-value');
+
+      // Update hidden inputs with the calculated values
+      if (decimalSpan?.textContent) document.getElementById('hidden-decimal_duration').value = parseFloat(decimalSpan.textContent);
+      if (mphSpan?.textContent) document.getElementById('hidden-mph').value = parseFloat(mphSpan.textContent);
+      if (mpmSpan?.textContent) {
+        const parts = mpmSpan.textContent.split(':');
+        if (parts.length === 2) {
+          const mins = parseInt(parts[0], 10);
+          const secs = parseInt(parts[1], 10);
+          document.getElementById('hidden-minutes_per_mile').value = mins + secs / 60;
+        }
+      }
+      if (cpmSpan?.textContent) document.getElementById('hidden-calories_per_minute').value = parseFloat(cpmSpan.textContent);
+      if (cpmileSpan?.textContent) document.getElementById('hidden-calories_per_mile').value = parseFloat(cpmileSpan.textContent);
+      if (thbSpan?.textContent) document.getElementById('hidden-total_heart_beats').value = parseInt(thbSpan.textContent, 10);
+      if (hbpmSpan?.textContent) document.getElementById('hidden-heart_beats_per_mile').value = parseInt(hbpmSpan.textContent, 10);
+    }
+
+    document.getElementById('update-form').addEventListener('submit', function(e) {
+      captureCalculatedValues();
+    });
+
     document.addEventListener('input', function(e) {
       if (!e.target.matches('input[name="duration"]')) return;
       const input = e.target;
