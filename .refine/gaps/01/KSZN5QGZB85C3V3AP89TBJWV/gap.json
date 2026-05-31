@@ -1,12 +1,12 @@
 {
   "id": "01KSZN5QGZB85C3V3AP89TBJWV",
   "name": "change the font to courier",
-  "status": "in-progress",
+  "status": "ready-merge",
   "priority": "low",
   "branch_name": "refine/01KSZN5QGZB85C3V3AP89TBJWV",
   "instance_id": "default",
   "created": "2026-05-31T18:36:37Z",
-  "updated": "2026-05-31T18:37:13Z",
+  "updated": "2026-05-31T18:37:49Z",
   "notes": [],
   "rounds": [
     {
@@ -14,7 +14,7 @@
       "actual": "incorrect font",
       "target": "change the font to courier",
       "created": "2026-05-31T18:36:37Z",
-      "updated": "2026-05-31T18:37:11Z",
+      "updated": "2026-05-31T18:37:49Z",
       "rule_state": "unclassified",
       "meta_rule_state": "unclassified",
       "product_state": "unclassified",
@@ -23,10 +23,10 @@
       "governance_details": "",
       "governance_checked_at": "",
       "governance_rule_actions": [],
-      "quality_state": "unclassified",
-      "quality_message": "",
+      "quality_state": "passed",
+      "quality_message": "Quality disabled; QA bypassed.",
       "quality_details": "",
-      "quality_checked_at": ""
+      "quality_checked_at": "2026-05-31T18:37:49Z"
     }
   ]
 }
