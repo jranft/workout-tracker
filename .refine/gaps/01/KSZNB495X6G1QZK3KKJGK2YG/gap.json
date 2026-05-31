@@ -1,12 +1,12 @@
 {
   "id": "01KSZNB495X6G1QZK3KKJGK2YG",
   "name": "change all fonts to font-size 10px",
-  "status": "review",
+  "status": "done",
   "priority": "high",
   "branch_name": null,
   "instance_id": "default",
   "created": "2026-05-31T18:39:34Z",
-  "updated": "2026-05-31T18:40:10Z",
+  "updated": "2026-05-31T18:41:36Z",
   "notes": [],
   "rounds": [
     {
