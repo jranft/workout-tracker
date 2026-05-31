@@ -1,12 +1,12 @@
 {
   "id": "01KSZN5QGZB85C3V3AP89TBJWV",
   "name": "change the font to courier",
-  "status": "review",
+  "status": "done",
   "priority": "low",
   "branch_name": null,
   "instance_id": "default",
   "created": "2026-05-31T18:36:37Z",
-  "updated": "2026-05-31T18:37:51Z",
+  "updated": "2026-05-31T18:38:19Z",
   "notes": [],
   "rounds": [
     {
