@@ -1,0 +1,9 @@
+# refine runtime state - local, derived, or high-churn.
+index.sqlite
+index.sqlite-shm
+index.sqlite-wal
+app.log
+app.pid
+logs/
+regressions/runs/
+gaps/**/logs.jsonl

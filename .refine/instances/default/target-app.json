@@ -1,0 +1,22 @@
+{
+  "target_app_start_instructions": "",
+  "target_app_stop_instructions": "",
+  "target_app_health_url": "",
+  "target_app_url": "",
+  "target_app_start_command": "",
+  "target_app_stop_command": "",
+  "target_app_rebuild_command": "",
+  "target_app_status_command": "",
+  "target_app_cwd": "",
+  "target_app_env_json": "{}",
+  "target_app_start_timeout_seconds": "120",
+  "target_app_stop_timeout_seconds": "60",
+  "target_app_rebuild_timeout_seconds": "300",
+  "target_app_status_timeout_seconds": "10",
+  "target_app_log_path": "",
+  "target_app_http_check_url": "",
+  "target_app_tcp_check_host": "",
+  "target_app_tcp_check_port": "",
+  "target_app_process_check_command": "",
+  "target_app_auto_rebuild": "on_worktree_merge"
+}

@@ -1,0 +1,18 @@
+{
+  "parallel_run_cap": "5",
+  "branch_name_pattern": "refine/{gap_id}",
+  "agent_idle_timeout_seconds": "900",
+  "agent_hard_cap_seconds": "86400",
+  "chat_idle_timeout_seconds": "300",
+  "agent_limit_pause_seconds": "60",
+  "worker_memory_limit_mb": "2000",
+  "ui_memory_limit_mb": "2000",
+  "worker_cpu_priority": "low",
+  "resource_isolation_mode": "auto",
+  "backlog_promote_after_seconds": "3600",
+  "project_update_pulse_interval_seconds": "60",
+  "file_browser_ignore_patterns": "node_modules, .git, .refine",
+  "agents_paused": "0",
+  "paused": "0",
+  "agent_cli": "claude"
+}
