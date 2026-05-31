@@ -1,12 +1,12 @@
 {
   "id": "01KSZN5QGZB85C3V3AP89TBJWV",
   "name": "change the font to courier",
-  "status": "backlog",
+  "status": "in-progress",
   "priority": "low",
-  "branch_name": null,
+  "branch_name": "refine/01KSZN5QGZB85C3V3AP89TBJWV",
   "instance_id": "default",
   "created": "2026-05-31T18:36:37Z",
-  "updated": "2026-05-31T18:36:37Z",
+  "updated": "2026-05-31T18:37:13Z",
   "notes": [],
   "rounds": [
     {
@@ -14,7 +14,7 @@
       "actual": "incorrect font",
       "target": "change the font to courier",
       "created": "2026-05-31T18:36:37Z",
-      "updated": "2026-05-31T18:36:37Z",
+      "updated": "2026-05-31T18:37:11Z",
       "rule_state": "unclassified",
       "meta_rule_state": "unclassified",
       "product_state": "unclassified",
