@@ -1,4 +1,10 @@
 {
-  "reporters": [],
-  "updated_at": "2026-05-31T17:03:53Z"
+  "reporters": [
+    {
+      "id": 1,
+      "name": "reporter",
+      "created": "2026-05-31T17:13:24Z"
+    }
+  ],
+  "updated_at": "2026-05-31T17:13:24Z"
 }
