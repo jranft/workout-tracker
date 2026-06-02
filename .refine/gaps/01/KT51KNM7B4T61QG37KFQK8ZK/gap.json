@@ -1,12 +1,12 @@
 {
   "id": "01KT51KNM7B4T61QG37KFQK8ZK",
   "name": "Fix this issue",
-  "status": "in-progress",
+  "status": "ready-merge",
   "priority": "low",
   "branch_name": "refine/01KT51KNM7B4T61QG37KFQK8ZK",
   "instance_id": "default",
   "created": "2026-06-02T20:50:09Z",
-  "updated": "2026-06-02T20:50:17Z",
+  "updated": "2026-06-02T21:01:25Z",
   "notes": [],
   "rounds": [
     {
@@ -14,7 +14,7 @@
       "actual": "When trying to work on a gap, refine reported this error.\nWorkflow status changed: ready-merge → failed; git merge failed",
       "target": "Fix this issue",
       "created": "2026-06-02T20:50:09Z",
-      "updated": "2026-06-02T20:50:16Z",
+      "updated": "2026-06-02T21:01:25Z",
       "rule_state": "unclassified",
       "meta_rule_state": "unclassified",
       "product_state": "unclassified",
@@ -23,10 +23,10 @@
       "governance_details": "",
       "governance_checked_at": "",
       "governance_rule_actions": [],
-      "quality_state": "unclassified",
-      "quality_message": "",
+      "quality_state": "passed",
+      "quality_message": "Quality disabled; QA bypassed.",
       "quality_details": "",
-      "quality_checked_at": ""
+      "quality_checked_at": "2026-06-02T21:01:25Z"
     }
   ]
 }
