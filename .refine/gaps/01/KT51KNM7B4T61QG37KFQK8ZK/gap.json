@@ -1,12 +1,12 @@
 {
   "id": "01KT51KNM7B4T61QG37KFQK8ZK",
   "name": "Fix this issue",
-  "status": "ready-merge",
+  "status": "review",
   "priority": "low",
-  "branch_name": "refine/01KT51KNM7B4T61QG37KFQK8ZK",
+  "branch_name": null,
   "instance_id": "default",
   "created": "2026-06-02T20:50:09Z",
-  "updated": "2026-06-02T21:01:25Z",
+  "updated": "2026-06-02T21:01:29Z",
   "notes": [],
   "rounds": [
     {
