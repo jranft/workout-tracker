@@ -1,0 +1,32 @@
+{
+  "id": "01KT51DAWCDAB59Y7M3605DB94",
+  "name": "Change all fonts faces to Helvetica Neue",
+  "status": "in-progress",
+  "priority": "low",
+  "branch_name": "refine/01KT51DAWCDAB59Y7M3605DB94",
+  "instance_id": "default",
+  "created": "2026-06-02T20:46:42Z",
+  "updated": "2026-06-02T20:46:50Z",
+  "notes": [],
+  "rounds": [
+    {
+      "reporter": "reporter",
+      "actual": "The fonts are wrong",
+      "target": "Change all fonts faces to Helvetica Neue. Be sure to use the correct weight of medium for the bolds and normal for the others.",
+      "created": "2026-06-02T20:46:42Z",
+      "updated": "2026-06-02T20:46:48Z",
+      "rule_state": "unclassified",
+      "meta_rule_state": "unclassified",
+      "product_state": "unclassified",
+      "constitution_state": "unclassified",
+      "governance_message": "",
+      "governance_details": "",
+      "governance_checked_at": "",
+      "governance_rule_actions": [],
+      "quality_state": "unclassified",
+      "quality_message": "",
+      "quality_details": "",
+      "quality_checked_at": ""
+    }
+  ]
+}
