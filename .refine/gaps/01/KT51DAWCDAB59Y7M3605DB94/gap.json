@@ -1,12 +1,12 @@
 {
   "id": "01KT51DAWCDAB59Y7M3605DB94",
   "name": "Change all fonts faces to Helvetica Neue",
-  "status": "ready-merge",
+  "status": "failed",
   "priority": "low",
   "branch_name": "refine/01KT51DAWCDAB59Y7M3605DB94",
   "instance_id": "default",
   "created": "2026-06-02T20:46:42Z",
-  "updated": "2026-06-02T20:48:16Z",
+  "updated": "2026-06-02T20:48:17Z",
   "notes": [],
   "rounds": [
     {
