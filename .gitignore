@@ -2,3 +2,4 @@ venv/
 workouts.db
 __pycache__/
 *.pyc
+.claude/worktrees/
